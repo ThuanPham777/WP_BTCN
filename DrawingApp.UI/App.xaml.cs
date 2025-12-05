@@ -1,50 +1,55 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
+﻿using DrawingApp.Core.Interfaces.Repositories;
+using DrawingApp.Core.Interfaces.Services;
+using DrawingApp.Data;
+using DrawingApp.Data.Repositories;
+using DrawingApp.Data.Seed;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.UI.Xaml;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+namespace DrawingApp.UI;
 
-namespace DrawingApp.UI
+public partial class App : Application
 {
-    /// <summary>
-    /// Provides application-specific behavior to supplement the default Application class.
-    /// </summary>
-    public partial class App : Application
+    public static IHost Host { get; private set; } = null!;
+
+    public App()
     {
-        private Window? _window;
+        this.InitializeComponent();
 
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
-        public App()
+        Host = Microsoft.Extensions.Hosting.Host
+            .CreateDefaultBuilder()
+            .ConfigureServices((ctx, services) =>
+            {
+                // Db path
+                var dbPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "DrawingApp", "app.db");
+                Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+
+                services.AddDbContext<AppDbContext>(opt =>
+                    opt.UseSqlite($"Data Source={dbPath}"));
+
+                // Repos
+                services.AddScoped<IProfileRepository, ProfileRepository>();
+                services.AddScoped<IBoardRepository, BoardRepository>();
+                services.AddScoped<ITemplateRepository, TemplateRepository>();
+            })
+            .Build();
+    }
+
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
+    {
+        using (var scope = Host.Services.CreateScope())
         {
-            InitializeComponent();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await DbSeeder.SeedAsync(db);
         }
 
-        /// <summary>
-        /// Invoked when the application is launched.
-        /// </summary>
-        /// <param name="args">Details about the launch request and process.</param>
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
-        {
-            _window = new MainWindow();
-            _window.Activate();
-        }
+        var window = Host.Services.GetRequiredService<MainWindow>();
+        window.Activate();
     }
 }
