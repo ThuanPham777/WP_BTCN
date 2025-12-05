@@ -1,0 +1,9 @@
+.vs/
+**/bin/
+**/obj/
+**/*.user
+**/*.db
+**/*.sqlite
+**/AppPackages/
+**/GeneratedFiles/
+LocalSettings.json

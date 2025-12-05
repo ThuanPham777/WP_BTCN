@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "DrawingApp.UI (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "DrawingApp.UI (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
