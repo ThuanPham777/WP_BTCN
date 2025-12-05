@@ -1,0 +1,23 @@
+<Page
+    x:Class="DrawingApp.UI.Pages.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel Spacing="12" Padding="24">
+        <TextBlock Text="Welcome to Drawing App" FontSize="28" FontWeight="SemiBold"/>
+        <TextBlock Text="Please select or create a Profile to continue." Opacity="0.7"/>
+
+        <Button Content="Manage Profiles" Command="{Binding GoProfilesCommand}" Width="200"/>
+
+        <ComboBox ItemsSource="{Binding Items}"
+                  SelectedItem="{Binding Selected}"
+                  DisplayMemberPath="Name"
+                  PlaceholderText="Select a profile"
+                  Width="320"/>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Load Profiles" Command="{Binding LoadAsyncCommand}"/>
+            <Button Content="Use Profile & Start Drawing" Command="{Binding UseSelectedCommand}"/>
+        </StackPanel>
+    </StackPanel>
+</Page>
