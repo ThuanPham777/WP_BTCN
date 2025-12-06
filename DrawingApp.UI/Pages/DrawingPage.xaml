@@ -13,6 +13,10 @@
 
             <StackPanel Orientation="Horizontal" Spacing="8">
 
+                <TextBox Width="140"
+                         PlaceholderText="Name"
+                         Text="{Binding BoardName, Mode=TwoWay}"/>
+
                 <!-- Tool -->
                 <ComboBox Width="180"
                           ItemsSource="{Binding ToolOptions}"

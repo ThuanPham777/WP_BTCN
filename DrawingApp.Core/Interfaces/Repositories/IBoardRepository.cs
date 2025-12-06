@@ -12,4 +12,13 @@ public interface IBoardRepository
     Task AddAsync(DrawingBoard board);
     Task UpdateAsync(DrawingBoard board);
     Task DeleteAsync(Guid id);
+
+    Task UpdateContentAsync(
+        Guid boardId,
+        string? name,
+        double width,
+        double height,
+        string? background,
+        List<BoardShape> newShapes);
+
 }

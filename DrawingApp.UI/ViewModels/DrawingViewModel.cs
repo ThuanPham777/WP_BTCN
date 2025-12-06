@@ -28,6 +28,8 @@ public partial class DrawingViewModel : ObservableObject
 
     [ObservableProperty] private Guid? currentBoardId;
 
+    [ObservableProperty] private string boardName = "Untitled Board";
+
     [ObservableProperty] private double boardWidth;
     [ObservableProperty] private double boardHeight;
     [ObservableProperty] private string boardBackground = "#FFFFFFFF";
@@ -87,30 +89,32 @@ public partial class DrawingViewModel : ObservableObject
 
         var shapes = RuntimeShapes.Select(MapRuntimeShape).ToList();
 
-        if (CurrentBoardId is Guid id)
+        if (CurrentBoardId.HasValue)
         {
-            var board = await _boards.GetByIdAsync(id);
-            if (board == null)
+            var id = CurrentBoardId.Value;
+            try
             {
-                CurrentBoardId = null;
-                await _dialog.ShowMessageAsync("Board", "Board not found, will create new.");
-            }
-            else
-            {
-                board.Width = BoardWidth;
-                board.Height = BoardHeight;
-                board.BackgroundColor = BoardBackground;
-                board.Shapes = shapes;
+                await _boards.UpdateContentAsync(
+                    id,
+                    BoardName,
+                    BoardWidth,
+                    BoardHeight,
+                    BoardBackground,
+                    shapes);
 
-                await _boards.UpdateAsync(board);
                 await _dialog.ShowMessageAsync("Saved", "Board updated successfully.");
+                return;
+            }
+            catch (Exception ex)
+            {
+                await _dialog.ShowMessageAsync("Save failed", ex.Message);
                 return;
             }
         }
 
         var newBoard = new DrawingBoard
         {
-            Name = $"Board {DateTime.Now:HHmmss}",
+            Name = BoardName,
             Width = BoardWidth,
             Height = BoardHeight,
             BackgroundColor = BoardBackground,
@@ -130,13 +134,14 @@ public partial class DrawingViewModel : ObservableObject
         if (RuntimeShapes.Count == 0) return;
 
         var last = RuntimeShapes.Last();
+
         var template = new ShapeTemplate
         {
             Name = $"Template {DateTime.Now:HHmmss}",
             ShapeType = GuessType(last),
-            StrokeColor = StrokeColor,
-            FillColor = FillColor,
-            Thickness = Thickness,
+            StrokeColor = ExtractBrushHex(last.Stroke) ?? StrokeColor,
+            FillColor = ExtractBrushHex(last.Fill) ?? FillColor,
+            Thickness = last.StrokeThickness,
             GeometryJson = SerializeShapeGeometry(last)
         };
 
@@ -144,17 +149,35 @@ public partial class DrawingViewModel : ObservableObject
         await _dialog.ShowMessageAsync("Template", "Saved last shape as template.");
     }
 
+
     private BoardShape MapRuntimeShape(Shape s)
     {
+        var strokeHex = ExtractBrushHex(s.Stroke) ?? "#FF000000";
+        var fillHex = ExtractBrushHex(s.Fill); // có thể null
+        var thickness = s.StrokeThickness;
+
         return new BoardShape
         {
             ShapeType = GuessType(s),
-            StrokeColor = StrokeColor,
-            FillColor = FillColor,
-            Thickness = Thickness,
+            StrokeColor = strokeHex,
+            FillColor = fillHex,
+            Thickness = thickness,
+            DashStyle = StrokeDash.Solid, // nếu bạn chưa lưu dash theo UI
             GeometryJson = SerializeShapeGeometry(s)
         };
     }
+
+    private static string? ExtractBrushHex(Brush? brush)
+    {
+        if (brush is SolidColorBrush scb)
+        {
+            var c = scb.Color; // Windows.UI.Color
+            return $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
+        }
+
+        return null;
+    }
+
 
     private static ShapeType GuessType(Shape s)
     {
@@ -217,6 +240,7 @@ public partial class DrawingViewModel : ObservableObject
             return;
         }
 
+        BoardName = board.Name;
         BoardWidth = board.Width;
         BoardHeight = board.Height;
         BoardBackground = board.BackgroundColor ?? "#FFFFFFFF";
