@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
@@ -13,6 +13,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Page Remove="Pages\DrawingPage.xaml" />
     <Page Remove="Pages\MainPage.xaml" />
     <Page Remove="Pages\ProfilePage.xaml" />
     <Page Remove="Pages\ShellPage.xaml" />
@@ -20,6 +21,10 @@
     <Page Remove="styles\TitleBarResources.xaml" />
   </ItemGroup>
   <ItemGroup>
+    <ApplicationDefinition Include="Pages\DrawingPage.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <Generator>MSBuild:Compile</Generator>
+    </ApplicationDefinition>
     <ApplicationDefinition Include="Pages\ProfilePage.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <Generator>MSBuild:Compile</Generator>
