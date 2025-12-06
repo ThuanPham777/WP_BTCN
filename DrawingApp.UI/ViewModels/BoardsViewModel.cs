@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.Input;
 using DrawingApp.Core.Entities;
 using DrawingApp.Core.Interfaces.Repositories;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

@@ -4,6 +4,7 @@ using DrawingApp.UI.Drawing.Tools;
 using DrawingApp.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
+using System;
 
 namespace DrawingApp.UI.Pages;
 
@@ -21,7 +22,6 @@ public sealed partial class DrawingPage : Page
 
         Loaded += DrawingPage_Loaded;
     }
-
     private void DrawingPage_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         var canvas = (Canvas)FindName("DrawCanvas")!;

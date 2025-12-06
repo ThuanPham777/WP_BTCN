@@ -29,5 +29,4 @@ public sealed partial class ManagementShellPage : Page
             }
         }
     }
-    public Frame MgmtFrame => (FindName("MgmtFrame") as Frame) ?? throw new InvalidOperationException("MgmtFrame not found.");
 }

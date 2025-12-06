@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DrawingApp.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251205164334_InitialCreate")]
+    [Migration("20251206091247_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -159,6 +159,7 @@ namespace DrawingApp.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("StrokeColor")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<double>("Thickness")

@@ -2,7 +2,6 @@
 using DrawingApp.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
-using System;
 
 namespace DrawingApp.UI.Pages;
 
@@ -12,14 +11,9 @@ public sealed partial class ShellPage : Page
 
     public ShellViewModel ViewModel { get; }
 
-    private Frame RootFrame = new Frame();
-    private NavigationView? Nav;
-
     public ShellPage()
     {
-        this.InitializeComponent();
-
-        Nav = FindName("Nav") as NavigationView;
+        InitializeComponent();
 
         ViewModel = App.Host.Services.GetRequiredService<ShellViewModel>();
         DataContext = ViewModel;
@@ -27,17 +21,9 @@ public sealed partial class ShellPage : Page
         _nav = App.Host.Services.GetRequiredService<INavigationService>();
         _nav.Frame = RootFrame;
 
+        // default route
         RootFrame.Navigate(typeof(MainPage));
-
-        if (Nav != null && Nav.MenuItems.Count > 0)
-        {
-            Nav.SelectedItem = Nav.MenuItems[0];
-        }
-    }
-
-    private void InitializeComponent()
-    {
-        throw new NotImplementedException();
+        Nav.SelectedItem = Nav.MenuItems[0];
     }
 
     private void Nav_BackRequested(NavigationView sender, NavigationViewBackRequestedEventArgs args)

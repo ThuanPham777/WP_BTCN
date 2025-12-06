@@ -12,32 +12,6 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <ItemGroup>
-    <Page Remove="Pages\DrawingPage.xaml" />
-    <Page Remove="Pages\MainPage.xaml" />
-    <Page Remove="Pages\ProfilePage.xaml" />
-    <Page Remove="Pages\ShellPage.xaml" />
-    <Page Remove="styles\ThemeResources.xaml" />
-    <Page Remove="styles\TitleBarResources.xaml" />
-  </ItemGroup>
-  <ItemGroup>
-    <ApplicationDefinition Include="Pages\DrawingPage.xaml">
-      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-      <Generator>MSBuild:Compile</Generator>
-    </ApplicationDefinition>
-    <ApplicationDefinition Include="Pages\ProfilePage.xaml">
-      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-      <Generator>MSBuild:Compile</Generator>
-    </ApplicationDefinition>
-    <ApplicationDefinition Include="Pages\MainPage.xaml">
-      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-      <Generator>MSBuild:Compile</Generator>
-    </ApplicationDefinition>
-    <ApplicationDefinition Include="Pages\ShellPage.xaml">
-      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-      <Generator>MSBuild:Compile</Generator>
-    </ApplicationDefinition>
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -79,12 +53,18 @@
     <Folder Include="Styles\" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="Styles\ThemeResources.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Styles\TitleBarResources.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
+    <Page Update="Pages\DashboardPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Pages\ManagementShellPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Pages\TemplatesPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Pages\BoardsPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
 
   <!--

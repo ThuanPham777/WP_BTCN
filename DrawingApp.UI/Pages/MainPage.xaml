@@ -17,7 +17,7 @@
 
         <StackPanel Orientation="Horizontal" Spacing="8">
             <Button Content="Load Profiles" Command="{Binding LoadAsyncCommand}"/>
-            <Button Content="Use Profile & Start Drawing" Command="{Binding UseSelectedCommand}"/>
+            <Button Content="Use Profile and Start Drawing" Command="{Binding UseSelectedCommand}"/>
         </StackPanel>
     </StackPanel>
 </Page>

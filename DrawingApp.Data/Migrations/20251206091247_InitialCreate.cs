@@ -37,7 +37,7 @@ namespace DrawingApp.Data.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
                     ShapeType = table.Column<int>(type: "INTEGER", nullable: false),
-                    StrokeColor = table.Column<string>(type: "TEXT", nullable: true),
+                    StrokeColor = table.Column<string>(type: "TEXT", nullable: false),
                     FillColor = table.Column<string>(type: "TEXT", nullable: true),
                     Thickness = table.Column<double>(type: "REAL", nullable: false),
                     DashStyle = table.Column<int>(type: "INTEGER", nullable: false),

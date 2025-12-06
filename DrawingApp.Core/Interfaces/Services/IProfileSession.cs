@@ -5,7 +5,7 @@ namespace DrawingApp.Core.Interfaces.Services;
 
 public interface IProfileSession
 {
-    Profile? Current { get; }
+    Profile? CurrentProfile { get; }
     event Action<Profile?>? ProfileChanged;
 
     void SetProfile(Profile profile);

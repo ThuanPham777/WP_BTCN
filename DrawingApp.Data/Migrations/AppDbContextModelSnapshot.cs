@@ -156,6 +156,7 @@ namespace DrawingApp.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("StrokeColor")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<double>("Thickness")

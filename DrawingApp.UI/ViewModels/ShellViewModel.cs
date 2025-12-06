@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DrawingApp.Core.Entities;
 using DrawingApp.Core.Interfaces.Services;
-using DrawingApp.UI.Services;
 
 namespace DrawingApp.UI.ViewModels;
 
@@ -16,7 +15,7 @@ public partial class ShellViewModel : ObservableObject
     {
         _session = session;
 
-        CurrentProfile = _session.Current;
+        CurrentProfile = _session.CurrentProfile;
         CanDraw = CurrentProfile != null;
 
         _session.ProfileChanged += OnProfileChanged;
