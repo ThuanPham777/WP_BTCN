@@ -4,7 +4,6 @@ using DrawingApp.Core.Entities;
 using DrawingApp.Core.Interfaces.Repositories;
 using DrawingApp.Core.Interfaces.Services;
 using DrawingApp.UI.Navigation;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
@@ -16,8 +15,12 @@ public partial class MainViewModel : ObservableObject
     private readonly IProfileSession _session;
     private readonly INavigationService _nav;
 
-    [ObservableProperty] private ObservableCollection<Profile> items = new();
-    [ObservableProperty] private Profile? selected;
+    [ObservableProperty]
+    private ObservableCollection<Profile> items = new();
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(GoDrawingCommand))]
+    private Profile? selected;
 
     public MainViewModel(
         IProfileRepository profiles,
@@ -28,6 +31,12 @@ public partial class MainViewModel : ObservableObject
         _session = session;
         _nav = nav;
     }
+    public bool CanGoDrawing => Selected != null;
+
+    partial void OnSelectedChanged(Profile? value)
+    {
+        OnPropertyChanged(nameof(CanGoDrawing));
+    }
 
     [RelayCommand]
     public async Task LoadAsync()
@@ -36,12 +45,14 @@ public partial class MainViewModel : ObservableObject
         Items = new ObservableCollection<Profile>(profiles);
     }
 
-    [RelayCommand]
-    public void UseSelected()
+    [RelayCommand(CanExecute = nameof(CanGoDrawing))]
+    public void GoDrawing()
     {
         if (Selected == null) return;
 
         _session.SetProfile(Selected);
+
+        // Navigate sang DrawingPage
         _nav.Navigate(typeof(Pages.DrawingPage));
     }
 

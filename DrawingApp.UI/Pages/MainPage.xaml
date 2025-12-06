@@ -7,17 +7,23 @@
         <TextBlock Text="Welcome to Drawing App" FontSize="28" FontWeight="SemiBold"/>
         <TextBlock Text="Please select or create a Profile to continue." Opacity="0.7"/>
 
-        <Button Content="Manage Profiles" Command="{Binding GoProfilesCommand}" Width="200"/>
+        <Button Content="Manage Profiles"
+                Command="{Binding GoProfilesCommand}"
+                Width="200"/>
 
         <ComboBox ItemsSource="{Binding Items}"
-                  SelectedItem="{Binding Selected}"
+                  SelectedItem="{Binding Selected, Mode=TwoWay}"
                   DisplayMemberPath="Name"
                   PlaceholderText="Select a profile"
                   Width="320"/>
 
         <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="Load Profiles" Command="{Binding LoadAsyncCommand}"/>
-            <Button Content="Use Profile and Start Drawing" Command="{Binding UseSelectedCommand}"/>
+            <Button Content="Load Profiles"
+                    Command="{Binding LoadCommand}"/>
+
+            <Button Content="Start Drawing"
+                    Command="{Binding GoDrawingCommand}"
+                    IsEnabled="{Binding CanGoDrawing, Mode=OneWay}"/>
         </StackPanel>
     </StackPanel>
 </Page>

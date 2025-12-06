@@ -24,6 +24,8 @@ public sealed partial class ShellPage : Page
         _nav = App.Host.Services.GetRequiredService<INavigationService>();
         _nav.Frame = RootFrame;
 
+        RootFrame.Navigated += RootFrame_Navigated;
+
         _dialog = App.Host.Services.GetRequiredService<IDialogService>();
 
         Loaded += ShellPage_Loaded;
@@ -32,6 +34,36 @@ public sealed partial class ShellPage : Page
         RootFrame.Navigate(typeof(MainPage));
         Nav.SelectedItem = Nav.MenuItems[0];
     }
+
+    private void RootFrame_Navigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    {
+        var pageType = e.SourcePageType;
+
+        if (pageType == typeof(MainPage))
+            SetSelectedByTag("main");
+        else if (pageType == typeof(ProfilePage))
+            SetSelectedByTag("profiles");
+        else if (pageType == typeof(DrawingPage))
+            SetSelectedByTag("draw");
+        else if (pageType == typeof(ManagementShellPage)
+              || pageType == typeof(BoardsPage)
+              || pageType == typeof(TemplatesPage)
+              || pageType == typeof(DashboardPage))
+            SetSelectedByTag("mgmt");
+    }
+
+    private void SetSelectedByTag(string tag)
+    {
+        foreach (var obj in Nav.MenuItems)
+        {
+            if (obj is NavigationViewItem item && item.Tag?.ToString() == tag)
+            {
+                Nav.SelectedItem = item;
+                return;
+            }
+        }
+    }
+
 
     private void Nav_BackRequested(NavigationView sender, NavigationViewBackRequestedEventArgs args)
     {
