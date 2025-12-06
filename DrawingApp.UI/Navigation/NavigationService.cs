@@ -13,6 +13,10 @@ public class NavigationService : INavigationService
         if (CanGoBack) Frame!.GoBack();
     }
 
+    public void Navigate(Type pageType)
+    {
+        Frame?.Navigate(pageType);
+    }
     public void Navigate(Type pageType, object? parameter)
     {
         Frame?.Navigate(pageType, parameter);

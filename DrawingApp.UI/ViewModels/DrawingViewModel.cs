@@ -5,7 +5,6 @@ using DrawingApp.Core.Enums;
 using DrawingApp.Core.Interfaces.Repositories;
 using DrawingApp.Core.Interfaces.Services;
 using DrawingApp.Core.Models;
-using DrawingApp.UI.Services;
 using Microsoft.UI.Xaml.Shapes;
 using System;
 using System.Collections.Generic;
@@ -13,6 +12,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.UI.Xaml.Media;
+using Windows.Foundation;
 
 namespace DrawingApp.UI.ViewModels;
 
@@ -24,6 +25,8 @@ public partial class DrawingViewModel : ObservableObject
     private readonly IDialogService _dialog;
     public IReadOnlyList<ShapeType> ToolOptions { get; }
         = Enum.GetValues<ShapeType>();
+
+    [ObservableProperty] private Guid? currentBoardId;
 
     [ObservableProperty] private double boardWidth;
     [ObservableProperty] private double boardHeight;
@@ -80,18 +83,43 @@ public partial class DrawingViewModel : ObservableObject
             return;
         }
 
-        var board = new DrawingBoard
+        var shapes = RuntimeShapes.Select(MapRuntimeShape).ToList();
+
+        if (CurrentBoardId is Guid id)
+        {
+            var board = await _boards.GetByIdAsync(id);
+            if (board == null)
+            {
+                CurrentBoardId = null;
+                await _dialog.ShowMessageAsync("Board", "Board not found, will create new.");
+            }
+            else
+            {
+                board.Width = BoardWidth;
+                board.Height = BoardHeight;
+                board.BackgroundColor = BoardBackground;
+                board.Shapes = shapes;
+
+                await _boards.UpdateAsync(board);
+                await _dialog.ShowMessageAsync("Saved", "Board updated successfully.");
+                return;
+            }
+        }
+
+        var newBoard = new DrawingBoard
         {
             Name = $"Board {DateTime.Now:HHmmss}",
             Width = BoardWidth,
             Height = BoardHeight,
             BackgroundColor = BoardBackground,
             ProfileId = profile.Id,
-            Shapes = RuntimeShapes.Select(MapRuntimeShape).ToList()
+            Shapes = shapes
         };
 
-        await _boards.AddAsync(board);
-        await _dialog.ShowMessageAsync("Saved", "Board saved successfully.");
+        await _boards.AddAsync(newBoard);
+        CurrentBoardId = newBoard.Id;
+
+        await _dialog.ShowMessageAsync("Saved", "Board created successfully.");
     }
 
     [RelayCommand]
@@ -172,5 +200,148 @@ public partial class DrawingViewModel : ObservableObject
         }
 
         return "{}";
+    }
+
+
+    // để cho các lệnh load board
+    public async Task LoadBoardAsync(Guid boardId)
+    {
+
+        CurrentBoardId = boardId;
+        var board = await _boards.GetByIdAsync(CurrentBoardId);
+        if (board == null)
+        {
+            await _dialog.ShowMessageAsync("Board", "Board not found.");
+            return;
+        }
+
+        BoardWidth = board.Width;
+        BoardHeight = board.Height;
+        BoardBackground = board.BackgroundColor ?? "#FFFFFFFF";
+
+        RuntimeShapes.Clear();
+
+        foreach (var bs in board.Shapes)
+        {
+            var shape = BuildShapeFromBoardShape(bs);
+            if (shape != null)
+                RuntimeShapes.Add(shape);
+        }
+
+        await _dialog.ShowMessageAsync("Board loaded", $"Loaded '{board.Name}'.");
+    }
+
+    private Shape? BuildShapeFromBoardShape(BoardShape bs)
+    {
+        // apply style later
+        var style = new StrokeStyle
+        {
+            StrokeColor = bs.StrokeColor,
+            FillColor = bs.FillColor,
+            Thickness = bs.Thickness,
+            Dash = bs.DashStyle
+        };
+
+        Shape? shape = bs.ShapeType switch
+        {
+            ShapeType.Line => BuildLine(bs.GeometryJson),
+            ShapeType.Rectangle => BuildRectangle(bs.GeometryJson),
+            ShapeType.Oval or ShapeType.Circle => BuildEllipse(bs.GeometryJson),
+            ShapeType.Polygon => BuildPolygon(bs.GeometryJson),
+            ShapeType.Triangle => BuildPolygon(bs.GeometryJson), // nếu bạn lưu triangle bằng polygon points
+            _ => null
+        };
+
+        if (shape != null)
+            DrawingApp.UI.Drawing.ShapeFactory.ApplyStroke(shape, style);
+
+        return shape;
+    }
+
+    private static Line? BuildLine(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            return new Line
+            {
+                X1 = root.GetProperty("x1").GetDouble(),
+                Y1 = root.GetProperty("y1").GetDouble(),
+                X2 = root.GetProperty("x2").GetDouble(),
+                Y2 = root.GetProperty("y2").GetDouble()
+            };
+        }
+        catch { return null; }
+    }
+
+    private static Rectangle? BuildRectangle(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var r = new Rectangle
+            {
+                Width = root.GetProperty("w").GetDouble(),
+                Height = root.GetProperty("h").GetDouble()
+            };
+
+            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(r, root.GetProperty("x").GetDouble());
+            Microsoft.UI.Xaml.Controls.Canvas.SetTop(r, root.GetProperty("y").GetDouble());
+
+            return r;
+        }
+        catch { return null; }
+    }
+
+    private static Ellipse? BuildEllipse(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var e = new Ellipse
+            {
+                Width = root.GetProperty("w").GetDouble(),
+                Height = root.GetProperty("h").GetDouble()
+            };
+
+            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(e, root.GetProperty("x").GetDouble());
+            Microsoft.UI.Xaml.Controls.Canvas.SetTop(e, root.GetProperty("y").GetDouble());
+
+            return e;
+        }
+        catch { return null; }
+    }
+
+    private static Polygon? BuildPolygon(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var poly = new Polygon
+            {
+                Points = new Microsoft.UI.Xaml.Media.PointCollection()
+            };
+
+            foreach (var p in root.GetProperty("points").EnumerateArray())
+            {
+                poly.Points.Add(new Windows.Foundation.Point(
+                    p.GetProperty("x").GetDouble(),
+                    p.GetProperty("y").GetDouble()));
+            }
+
+            return poly;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

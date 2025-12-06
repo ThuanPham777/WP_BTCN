@@ -16,7 +16,7 @@ public class BoardRepository : IBoardRepository
     public Task<List<DrawingBoard>> GetAllAsync()
         => _db.Boards.AsNoTracking().Include(x => x.Profile).OrderByDescending(x => x.CreatedAt).ToListAsync();
 
-    public Task<DrawingBoard?> GetByIdAsync(Guid id)
+    public Task<DrawingBoard?> GetByIdAsync(Guid? id)
         => _db.Boards.Include(x => x.Shapes).FirstOrDefaultAsync(x => x.Id == id);
 
     public async Task AddAsync(DrawingBoard board)

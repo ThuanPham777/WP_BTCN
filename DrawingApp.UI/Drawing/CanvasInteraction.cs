@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Shapes;
 using System;
+using System.Collections.Generic;
 using Windows.Foundation;
 
 namespace DrawingApp.UI.Drawing;
@@ -125,4 +126,12 @@ public class CanvasInteraction
             Thickness = s.Thickness,
             Dash = s.Dash
         };
+
+    public void ReloadFrom(IEnumerable<Shape> shapes)
+    {
+        _canvas.Children.Clear();
+        foreach (var s in shapes)
+            _canvas.Children.Add(s);
+    }
+
 }

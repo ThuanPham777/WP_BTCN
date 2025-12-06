@@ -11,15 +11,19 @@ public sealed partial class BoardsPage : Page
 
     public BoardsPage()
     {
-        this.InitializeComponent();
+        InitializeComponent();
 
         ViewModel = App.Host.Services.GetRequiredService<BoardsViewModel>();
         DataContext = ViewModel;
 
-        Loaded += BoardsPage_Loaded;
+        Loaded += async (_, __) => await ViewModel.LoadAsync();
     }
-    private async void BoardsPage_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+
+    private void BoardsList_ItemClick(object sender, ItemClickEventArgs e)
     {
-        await ViewModel.LoadAsync();
+        if (e.ClickedItem is not DrawingApp.Core.Entities.DrawingBoard board) return;
+
+        var nav = App.Host.Services.GetRequiredService<DrawingApp.UI.Navigation.INavigationService>();
+        nav.Navigate(typeof(DrawingPage), board.Id);
     }
 }

@@ -4,6 +4,7 @@ using DrawingApp.UI.Drawing.Tools;
 using DrawingApp.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using System;
 
 namespace DrawingApp.UI.Pages;
@@ -15,13 +16,27 @@ public sealed partial class DrawingPage : Page
 
     public DrawingPage()
     {
-        this.InitializeComponent();
+        InitializeComponent();
 
         ViewModel = App.Host.Services.GetRequiredService<DrawingViewModel>();
         DataContext = ViewModel;
 
         Loaded += DrawingPage_Loaded;
     }
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+
+        if (e.Parameter is Guid boardId)
+        {
+            await ViewModel.LoadBoardAsync(boardId);
+
+            // nếu canvas interaction đã có thì render lại
+            _interaction?.ReloadFrom(ViewModel.RuntimeShapes);
+        }
+    }
+
     private void DrawingPage_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         var canvas = (Canvas)FindName("DrawCanvas")!;

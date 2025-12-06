@@ -8,5 +8,6 @@ public interface INavigationService
     Frame? Frame { get; set; }
     bool CanGoBack { get; }
     void GoBack();
+    void Navigate(Type pageType);
     void Navigate(Type pageType, object? parameter = null);
 }
