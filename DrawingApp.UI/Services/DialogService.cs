@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml;
+﻿using DrawingApp.Core.Interfaces.Services;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Threading.Tasks;
@@ -7,25 +8,51 @@ namespace DrawingApp.UI.Services;
 
 public class DialogService : IDialogService
 {
-    private readonly MainWindow _window;
+    private XamlRoot? _xamlRoot;
 
-    public DialogService(MainWindow window)
+    public void SetXamlRoot(XamlRoot xamlRoot)
     {
-        _window = window;
+        _xamlRoot = xamlRoot;
     }
 
-    public async Task ShowMessageAsync(string title, string content)
+    public async Task ShowMessageAsync(string title, string message)
     {
-        var root = (_window.Content as FrameworkElement)?.XamlRoot;
+        if (_xamlRoot == null)
+        {
+            System.Diagnostics.Debug.WriteLine("[DialogService] XamlRoot is null. Dialog not shown.");
+            return;
+        }
 
         var dialog = new ContentDialog
         {
             Title = title,
-            Content = content,
+            Content = message,
             CloseButtonText = "OK",
-            XamlRoot = root
+            XamlRoot = _xamlRoot
         };
 
         await dialog.ShowAsync();
+    }
+
+    public async Task<bool> ShowConfirmAsync(string title, string message, string ok = "OK", string cancel = "Cancel")
+    {
+        if (_xamlRoot == null)
+        {
+            System.Diagnostics.Debug.WriteLine("[DialogService] XamlRoot is null. Confirm not shown.");
+            return false;
+        }
+
+        var dialog = new ContentDialog
+        {
+            Title = title,
+            Content = message,
+            PrimaryButtonText = ok,
+            CloseButtonText = cancel,
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = _xamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        return result == ContentDialogResult.Primary;
     }
 }

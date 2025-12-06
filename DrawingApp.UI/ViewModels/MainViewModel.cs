@@ -5,6 +5,7 @@ using DrawingApp.Core.Interfaces.Repositories;
 using DrawingApp.Core.Interfaces.Services;
 using DrawingApp.UI.Navigation;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 namespace DrawingApp.UI.ViewModels;
@@ -15,7 +16,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IProfileSession _session;
     private readonly INavigationService _nav;
 
-    [ObservableProperty] private List<Profile> items = new();
+    [ObservableProperty] private ObservableCollection<Profile> items = new();
     [ObservableProperty] private Profile? selected;
 
     public MainViewModel(
@@ -31,7 +32,8 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     public async Task LoadAsync()
     {
-        Items = await _profiles.GetAllAsync();
+        var profiles = await _profiles.GetAllAsync();
+        Items = new ObservableCollection<Profile>(profiles);
     }
 
     [RelayCommand]

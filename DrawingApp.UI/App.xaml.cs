@@ -41,8 +41,8 @@ public partial class App : Application
                     "DrawingApp", "app.db");
                 Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 
-                services.AddDbContext<AppDbContext>(opt =>
-                    opt.UseSqlite($"Data Source={dbPath}"));
+                services.AddDbContextFactory<AppDbContext>(opt =>
+                        opt.UseSqlite($"Data Source={dbPath}"));
 
                 // Repos
                 services.AddScoped<IProfileRepository, ProfileRepository>();

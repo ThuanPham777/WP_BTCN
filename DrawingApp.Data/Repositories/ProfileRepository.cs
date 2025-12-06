@@ -3,39 +3,55 @@ using DrawingApp.Core.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace DrawingApp.Data.Repositories;
 
 public class ProfileRepository : IProfileRepository
 {
-    private readonly AppDbContext _db;
-    public ProfileRepository(AppDbContext db) => _db = db;
+    private readonly IDbContextFactory<AppDbContext> _factory;
 
-    public Task<List<Profile>> GetAllAsync()
-        => _db.Profiles.AsNoTracking().OrderBy(x => x.CreatedAt).ToListAsync();
+    public ProfileRepository(IDbContextFactory<AppDbContext> factory)
+    {
+        _factory = factory;
+    }
 
-    public Task<Profile?> GetByIdAsync(Guid id)
-        => _db.Profiles.Include(x => x.Boards).FirstOrDefaultAsync(x => x.Id == id);
+    public async Task<List<Profile>> GetAllAsync()
+    {
+        await using var db = await _factory.CreateDbContextAsync();
+        return await db.Profiles.AsNoTracking().ToListAsync();
+    }
+
+    public async Task<Profile?> GetByIdAsync(Guid id)
+    {
+        await using var db = await _factory.CreateDbContextAsync();
+        return await db.Profiles.FirstOrDefaultAsync(x => x.Id == id);
+    }
 
     public async Task AddAsync(Profile profile)
     {
-        _db.Profiles.Add(profile);
-        await _db.SaveChangesAsync();
+        await using var db = await _factory.CreateDbContextAsync();
+        db.Profiles.Add(profile);
+        await db.SaveChangesAsync();
     }
 
     public async Task UpdateAsync(Profile profile)
     {
-        _db.Profiles.Update(profile);
-        await _db.SaveChangesAsync();
+        await using var db = await _factory.CreateDbContextAsync();
+
+        // attach & mark modified
+        db.Profiles.Update(profile);
+        await db.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(Guid id)
     {
-        var p = await _db.Profiles.FirstOrDefaultAsync(x => x.Id == id);
-        if (p == null) return;
-        _db.Profiles.Remove(p);
-        await _db.SaveChangesAsync();
+        await using var db = await _factory.CreateDbContextAsync();
+
+        var entity = await db.Profiles.FirstOrDefaultAsync(x => x.Id == id);
+        if (entity == null) return;
+
+        db.Profiles.Remove(entity);
+        await db.SaveChangesAsync();
     }
 }
