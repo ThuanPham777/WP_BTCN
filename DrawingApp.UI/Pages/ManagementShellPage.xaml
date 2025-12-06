@@ -1,0 +1,27 @@
+<Page
+    x:Class="DrawingApp.UI.Pages.ManagementShellPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls">
+
+    <Grid RowDefinitions="Auto,*" Padding="12">
+        <controls:BreadcrumbBar x:Name="Crumb" />
+
+        <controls:NavigationView Grid.Row="1"
+                         x:Name="MgmtNav"
+                         PaneDisplayMode="LeftCompact"
+                         SelectionChanged="MgmtNav_SelectionChanged">
+
+            <controls:NavigationView.MenuItems>
+                <controls:NavigationViewItem Content="Boards" Tag="boards" Icon="Document"/>
+                <controls:NavigationViewItem Content="Templates" Tag="templates" Icon="Copy"/>
+                <controls:NavigationViewItem Content="Dashboard" Tag="dashboard" Icon="ReportHacked"/>
+            </controls:NavigationView.MenuItems>
+
+            <controls:NavigationView.Content>
+                <Frame x:Name="MgmtFrame"/>
+            </controls:NavigationView.Content>
+        </controls:NavigationView>
+
+    </Grid>
+</Page>

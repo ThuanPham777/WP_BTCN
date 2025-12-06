@@ -6,13 +6,19 @@ namespace DrawingApp.UI.Services;
 
 public class ProfileSession : IProfileSession
 {
-    public Profile? CurrentProfile { get; private set; }
+    public Profile? Current { get; private set; }
 
     public event Action<Profile?>? ProfileChanged;
 
-    public void SetProfile(Profile? profile)
+    public void SetProfile(Profile profile)
     {
-        CurrentProfile = profile;
-        ProfileChanged?.Invoke(profile);
+        Current = profile;
+        ProfileChanged?.Invoke(Current);
+    }
+
+    public void Clear()
+    {
+        Current = null;
+        ProfileChanged?.Invoke(Current);
     }
 }
