@@ -9,54 +9,67 @@ namespace DrawingApp.UI.Drawing.Tools;
 
 public class EllipseTool : IDrawTool
 {
-    private readonly ShapeType _type;
-    public ShapeType Type => _type;
+    public ShapeType Type { get; }
 
-    public Shape? Preview { get; private set; }
     private Point _start;
-    private StrokeStyle _style = new();
+    private Ellipse? _ellipse;
+
+    public Shape? Preview => _ellipse;
 
     public EllipseTool(ShapeType type)
     {
-        _type = type; // Oval or Circle
+        Type = type; // Oval hoặc Circle
     }
 
     public void Begin(Point start, StrokeStyle style)
     {
         _start = start;
-        _style = style;
 
-        var el = new Ellipse();
-        ShapeFactory.ApplyStroke(el, style);
-        Preview = el;
+        _ellipse = new Ellipse
+        {
+            Width = 0,
+            Height = 0
+        };
+
+        ShapeFactory.ApplyStroke(_ellipse, style);
+        Canvas.SetLeft(_ellipse, start.X);
+        Canvas.SetTop(_ellipse, start.Y);
     }
 
     public void Update(Point current)
     {
-        if (Preview is not Ellipse el) return;
+        if (_ellipse == null) return;
 
-        var x = Math.Min(_start.X, current.X);
-        var y = Math.Min(_start.Y, current.Y);
-        var w = Math.Abs(_start.X - current.X);
-        var h = Math.Abs(_start.Y - current.Y);
+        var left = Math.Min(_start.X, current.X);
+        var top = Math.Min(_start.Y, current.Y);
+        var right = Math.Max(_start.X, current.X);
+        var bottom = Math.Max(_start.Y, current.Y);
 
-        if (_type == ShapeType.Circle)
+        var w = right - left;
+        var h = bottom - top;
+
+        if (Type == ShapeType.Circle)
         {
-            var s = Math.Min(w, h);
-            w = h = s;
+            // ép thành hình tròn
+            var size = Math.Min(w, h);
+            w = size;
+            h = size;
+
+            // giữ circle theo hướng kéo
+            if (current.X < _start.X) left = _start.X - size;
+            if (current.Y < _start.Y) top = _start.Y - size;
         }
 
-        Canvas.SetLeft(el, x);
-        Canvas.SetTop(el, y);
-        el.Width = w;
-        el.Height = h;
+        _ellipse.Width = w;
+        _ellipse.Height = h;
+
+        Canvas.SetLeft(_ellipse, left);
+        Canvas.SetTop(_ellipse, top);
     }
 
     public Shape? End(Point end)
     {
         Update(end);
-        var result = Preview;
-        Preview = null;
-        return result;
+        return _ellipse;
     }
 }

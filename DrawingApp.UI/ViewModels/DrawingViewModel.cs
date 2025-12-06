@@ -9,6 +9,7 @@ using DrawingApp.UI.Services;
 using Microsoft.UI.Xaml.Shapes;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -21,6 +22,8 @@ public partial class DrawingViewModel : ObservableObject
     private readonly IBoardRepository _boards;
     private readonly ITemplateRepository _templates;
     private readonly IDialogService _dialog;
+    public IReadOnlyList<ShapeType> ToolOptions { get; }
+        = Enum.GetValues<ShapeType>();
 
     [ObservableProperty] private double boardWidth;
     [ObservableProperty] private double boardHeight;
@@ -32,7 +35,7 @@ public partial class DrawingViewModel : ObservableObject
     [ObservableProperty] private string? fillColor;
     [ObservableProperty] private double thickness = 2;
 
-    public List<Shape> RuntimeShapes { get; } = new();
+    public ObservableCollection<Shape> RuntimeShapes { get; } = new();
 
     public DrawingViewModel(
         IProfileSession session,

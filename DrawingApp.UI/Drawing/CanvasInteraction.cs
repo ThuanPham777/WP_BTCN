@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Shapes;
 using System;
+using Windows.Foundation;
 
 namespace DrawingApp.UI.Drawing;
 
@@ -25,8 +26,9 @@ public class CanvasInteraction
         _canvas.PointerPressed += OnPressed;
         _canvas.PointerMoved += OnMoved;
         _canvas.PointerReleased += OnReleased;
-        _canvas.DoubleTapped += OnDoubleTapped;
+
         _canvas.Tapped += OnTapped;
+        _canvas.DoubleTapped += OnDoubleTapped;
     }
 
     private void OnPressed(object sender, PointerRoutedEventArgs e)
@@ -37,15 +39,22 @@ public class CanvasInteraction
         _isDrawing = true;
 
         CurrentTool.Begin(p, CloneStyle(CurrentStyle));
+
         if (CurrentTool.Preview != null && !_canvas.Children.Contains(CurrentTool.Preview))
             _canvas.Children.Add(CurrentTool.Preview);
+
+        _canvas.CapturePointer(e.Pointer);
+        e.Handled = true;
     }
 
     private void OnMoved(object sender, PointerRoutedEventArgs e)
     {
         if (!_isDrawing || CurrentTool == null) return;
+
         var p = e.GetCurrentPoint(_canvas).Position;
         CurrentTool.Update(p);
+
+        e.Handled = true;
     }
 
     private void OnReleased(object sender, PointerRoutedEventArgs e)
@@ -54,14 +63,22 @@ public class CanvasInteraction
 
         var p = e.GetCurrentPoint(_canvas).Position;
 
-        // Polygon: không finalize ở release
-        if (CurrentTool is PolygonTool) return;
+        // Polygon không finalize ở release
+        if (CurrentTool is PolygonTool)
+        {
+            e.Handled = true;
+            return;
+        }
 
         var shape = CurrentTool.End(p);
+
         _isDrawing = false;
+        _canvas.ReleasePointerCapture(e.Pointer);
 
         if (shape != null)
             ShapeCompleted?.Invoke(shape);
+
+        e.Handled = true;
     }
 
     private void OnTapped(object sender, TappedRoutedEventArgs e)
@@ -69,7 +86,18 @@ public class CanvasInteraction
         if (CurrentTool is PolygonTool poly)
         {
             var p = e.GetPosition(_canvas);
+
+            // Nếu chưa Begin vì user click trực tiếp:
+            // đảm bảo tool đã có preview instance
+            if (poly.Preview == null)
+            {
+                poly.Begin(p, CloneStyle(CurrentStyle));
+                if (poly.Preview != null && !_canvas.Children.Contains(poly.Preview))
+                    _canvas.Children.Add(poly.Preview);
+            }
+
             poly.AddPoint(p);
+            e.Handled = true;
         }
     }
 
@@ -79,10 +107,13 @@ public class CanvasInteraction
         {
             var p = e.GetPosition(_canvas);
             var shape = poly.End(p);
+
             _isDrawing = false;
 
             if (shape != null)
                 ShapeCompleted?.Invoke(shape);
+
+            e.Handled = true;
         }
     }
 

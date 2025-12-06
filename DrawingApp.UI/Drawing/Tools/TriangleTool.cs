@@ -9,49 +9,49 @@ namespace DrawingApp.UI.Drawing.Tools;
 public class TriangleTool : IDrawTool
 {
     public ShapeType Type => ShapeType.Triangle;
-    public Shape? Preview { get; private set; }
 
     private Point _start;
-    private StrokeStyle _style = new();
+    private Polygon? _poly;
+
+    public Shape? Preview => _poly;
 
     public void Begin(Point start, StrokeStyle style)
     {
         _start = start;
-        _style = style;
 
-        var poly = new Polygon();
-        ShapeFactory.ApplyStroke(poly, style);
-        Preview = poly;
+        _poly = new Polygon();
+        ShapeFactory.ApplyStroke(_poly, style);
+
+        _poly.Points.Add(start);
+        _poly.Points.Add(start);
+        _poly.Points.Add(start);
     }
 
     public void Update(Point current)
     {
-        if (Preview is not Polygon poly) return;
+        if (_poly == null) return;
 
-        // Triangle is derived from bounding box
-        var x1 = _start.X;
-        var y1 = _start.Y;
-        var x2 = current.X;
-        var y2 = current.Y;
-
-        var left = Math.Min(x1, x2);
-        var right = Math.Max(x1, x2);
-        var top = Math.Min(y1, y2);
-        var bottom = Math.Max(y1, y2);
+        // Bounding box
+        var left = Math.Min(_start.X, current.X);
+        var top = Math.Min(_start.Y, current.Y);
+        var right = Math.Max(_start.X, current.X);
+        var bottom = Math.Max(_start.Y, current.Y);
 
         var midX = (left + right) / 2;
 
-        poly.Points.Clear();
-        poly.Points.Add(new Windows.Foundation.Point(midX, top));
-        poly.Points.Add(new Windows.Foundation.Point(right, bottom));
-        poly.Points.Add(new Windows.Foundation.Point(left, bottom));
+        var p1 = new Point(midX, top);
+        var p2 = new Point(right, bottom);
+        var p3 = new Point(left, bottom);
+
+        _poly.Points[0] = p1;
+        _poly.Points[1] = p2;
+        _poly.Points[2] = p3;
+
     }
 
     public Shape? End(Point end)
     {
         Update(end);
-        var result = Preview;
-        Preview = null;
-        return result;
+        return _poly;
     }
 }

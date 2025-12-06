@@ -10,41 +10,44 @@ namespace DrawingApp.UI.Drawing.Tools;
 public class RectangleTool : IDrawTool
 {
     public ShapeType Type => ShapeType.Rectangle;
-    public Shape? Preview { get; private set; }
 
     private Point _start;
-    private StrokeStyle _style = new();
+    private Rectangle? _rect;
+
+    public Shape? Preview => _rect;
 
     public void Begin(Point start, StrokeStyle style)
     {
         _start = start;
-        _style = style;
 
-        var rect = new Rectangle();
-        ShapeFactory.ApplyStroke(rect, style);
-        Preview = rect;
+        _rect = new Rectangle();
+        ShapeFactory.ApplyStroke(_rect, style);
+
+        Canvas.SetLeft(_rect, start.X);
+        Canvas.SetTop(_rect, start.Y);
+
+        _rect.Width = 0;
+        _rect.Height = 0;
     }
 
     public void Update(Point current)
     {
-        if (Preview is not Rectangle rect) return;
+        if (_rect == null) return;
 
         var x = Math.Min(_start.X, current.X);
         var y = Math.Min(_start.Y, current.Y);
-        var w = Math.Abs(_start.X - current.X);
-        var h = Math.Abs(_start.Y - current.Y);
+        var w = Math.Abs(current.X - _start.X);
+        var h = Math.Abs(current.Y - _start.Y);
 
-        Canvas.SetLeft(rect, x);
-        Canvas.SetTop(rect, y);
-        rect.Width = w;
-        rect.Height = h;
+        Canvas.SetLeft(_rect, x);
+        Canvas.SetTop(_rect, y);
+        _rect.Width = w;
+        _rect.Height = h;
     }
 
     public Shape? End(Point end)
     {
         Update(end);
-        var result = Preview;
-        Preview = null;
-        return result;
+        return _rect;
     }
 }
