@@ -14,10 +14,10 @@
             <controls:NavigationView.MenuItems>
                 <controls:NavigationViewItem Content="Home" Tag="main" Icon="Home"/>
                 <controls:NavigationViewItem Content="Profiles" Tag="profiles" Icon="Contact"/>
-                <controls:NavigationViewItem Content="Draw"
+                <!--<controls:NavigationViewItem Content="Draw"
                                              Tag="draw"
                                              Icon="Edit"
-                                             IsEnabled="{Binding CanDraw, Mode=OneWay}"/>
+                                             IsEnabled="{Binding CanDraw, Mode=OneWay}"/>-->
                 <controls:NavigationViewItem Content="Management" Tag="mgmt" Icon="AllApps"/>
             </controls:NavigationView.MenuItems>
 

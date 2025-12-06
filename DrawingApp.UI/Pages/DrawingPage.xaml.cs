@@ -44,7 +44,20 @@ public sealed partial class DrawingPage : Page
 
         _interaction.ShapeCompleted += shape =>
         {
+            // 1) Add vào runtime
             ViewModel.RuntimeShapes.Add(shape);
+
+            // 2) Đảm bảo shape có trong canvas (nếu tool trả về shape mới)
+            if (!canvas.Children.Contains(shape))
+                canvas.Children.Add(shape);
+
+            // 3) Enable hit test + fill behavior
+            shape.IsHitTestVisible = true;
+            shape.Tapped += (_, __) =>
+            {
+                if (ViewModel.IsFillMode)
+                    ViewModel.ApplyFillTo(shape);
+            };
         };
 
         ApplyTool(ViewModel.CurrentTool);
@@ -78,5 +91,17 @@ public sealed partial class DrawingPage : Page
             ShapeType.Polygon => new PolygonTool(),
             _ => new LineTool()
         };
+    }
+
+    private void BoardW_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (DataContext is DrawingViewModel vm && !double.IsNaN(args.NewValue))
+            vm.BoardWidth = args.NewValue;
+    }
+
+    private void BoardH_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (DataContext is DrawingViewModel vm && !double.IsNaN(args.NewValue))
+            vm.BoardHeight = args.NewValue;
     }
 }

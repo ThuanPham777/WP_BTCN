@@ -38,6 +38,8 @@ public partial class DrawingViewModel : ObservableObject
     [ObservableProperty] private string? fillColor;
     [ObservableProperty] private double thickness = 2;
 
+    [ObservableProperty] private bool isFillMode;
+
     public ObservableCollection<Shape> RuntimeShapes { get; } = new();
 
     public DrawingViewModel(
@@ -343,5 +345,28 @@ public partial class DrawingViewModel : ObservableObject
         {
             return null;
         }
+    }
+
+    public void ApplyFillTo(Shape shape)
+    {
+        // nếu FillColor rỗng thì dùng StrokeColor cho tiện
+        var hex = string.IsNullOrWhiteSpace(FillColor) ? StrokeColor : FillColor!;
+        shape.Fill = new SolidColorBrush(ParseColor(hex));
+    }
+
+    private static Windows.UI.Color ParseColor(string hex)
+    {
+        // Expect #AARRGGBB
+        if (string.IsNullOrWhiteSpace(hex))
+            return Windows.UI.Color.FromArgb(255, 0, 0, 0);
+
+        if (hex.StartsWith("#")) hex = hex[1..];
+        if (hex.Length == 6) hex = "FF" + hex; // support #RRGGBB
+
+        byte a = Convert.ToByte(hex.Substring(0, 2), 16);
+        byte r = Convert.ToByte(hex.Substring(2, 2), 16);
+        byte g = Convert.ToByte(hex.Substring(4, 2), 16);
+        byte b = Convert.ToByte(hex.Substring(6, 2), 16);
+        return Windows.UI.Color.FromArgb(a, r, g, b);
     }
 }

@@ -38,11 +38,13 @@
 
                 <NumberBox Width="120"
                            Header="Board W"
-                           Value="{Binding BoardWidth, Mode=TwoWay}"/>
+                           Value="{Binding BoardWidth, Mode=TwoWay}"
+                           ValueChanged="BoardW_ValueChanged"/>
 
                 <NumberBox Width="120"
                            Header="Board H"
-                           Value="{Binding BoardHeight, Mode=TwoWay}"/>
+                           Value="{Binding BoardHeight, Mode=TwoWay}"
+                           ValueChanged="BoardH_ValueChanged"/>
 
                 <TextBox Width="160"
                          PlaceholderText="Board BG"
@@ -53,6 +55,9 @@
 
                 <Button Content="Save Last Shape -> Template"
                         Command="{Binding SaveLastShapeAsTemplateCommand}"/>
+
+                <ToggleButton Content="Fill Mode"
+                        IsChecked="{Binding IsFillMode, Mode=TwoWay}"/>
             </StackPanel>
         </ScrollViewer>
 
@@ -65,6 +70,8 @@
 
             <Canvas x:Name="DrawCanvas"
                     Background="Transparent"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
                     Width="{Binding BoardWidth}"
                     Height="{Binding BoardHeight}"/>
         </Border>
