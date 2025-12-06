@@ -12,6 +12,27 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <Page Remove="Pages\MainPage.xaml" />
+    <Page Remove="Pages\ProfilePage.xaml" />
+    <Page Remove="Pages\ShellPage.xaml" />
+    <Page Remove="styles\ThemeResources.xaml" />
+    <Page Remove="styles\TitleBarResources.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="Pages\ProfilePage.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <Generator>MSBuild:Compile</Generator>
+    </ApplicationDefinition>
+    <ApplicationDefinition Include="Pages\MainPage.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <Generator>MSBuild:Compile</Generator>
+    </ApplicationDefinition>
+    <ApplicationDefinition Include="Pages\ShellPage.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <Generator>MSBuild:Compile</Generator>
+    </ApplicationDefinition>
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -48,6 +69,17 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
     <ProjectReference Include="..\DrawingApp.Core\DrawingApp.Core.csproj" />
     <ProjectReference Include="..\DrawingApp.Data\DrawingApp.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Styles\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Styles\ThemeResources.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Styles\TitleBarResources.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
   </ItemGroup>
 
   <!--
