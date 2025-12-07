@@ -1,4 +1,5 @@
 ﻿using DrawingApp.Core.Enums;
+using DrawingApp.UI.Converters;
 using DrawingApp.UI.Drawing;
 using DrawingApp.UI.Drawing.Tools;
 using DrawingApp.UI.Navigation;
@@ -22,6 +23,7 @@ public sealed partial class DrawingPage : Page
     public DrawingViewModel ViewModel { get; }
     private CanvasInteraction? _interaction;
     private const double MIN_SEL_SIZE = 12;
+    private const float ZOOM_STEP = 0.1f;
 
     // ==========================
     // 1) Drag-box selecting state
@@ -130,7 +132,7 @@ public sealed partial class DrawingPage : Page
                 ApplyTool(ViewModel.CurrentTool);
 
             if (args.PropertyName == nameof(ViewModel.StrokeColor)
-                || args.PropertyName == nameof(ViewModel.FillColor)
+                //|| args.PropertyName == nameof(ViewModel.FillColor)
                 || args.PropertyName == nameof(ViewModel.Thickness))
             {
                 _interaction.CurrentStyle = ViewModel.BuildStyle();
@@ -162,7 +164,81 @@ public sealed partial class DrawingPage : Page
 
         _interaction.IsEnabled = !ViewModel.IsSelectionMode;
 
+        UpdateBoardClip();
+
         ClearSelectionVisuals();
+    }
+
+    private void ColorSwatch_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button b && b.Tag is string hex)
+        {
+            ViewModel.PickColorCommand.Execute(hex);
+        }
+    }
+
+    private async void MoreColors_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new ColorPicker
+        {
+            IsAlphaEnabled = true,
+            IsAlphaSliderVisible = true,
+            IsMoreButtonVisible = true
+        };
+
+        picker.Color = HexToBrushConverter.ParseColor(ViewModel.SelectedColor);
+
+        var dialog = new ContentDialog
+        {
+            Title = "Pick a color",
+            Content = picker,
+            PrimaryButtonText = "OK",
+            CloseButtonText = "Cancel",
+            XamlRoot = this.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            var hex = HexToBrushConverter.ToHex(picker.Color);
+            ViewModel.ApplyCustomColor(hex);
+        }
+    }
+
+
+    // ✅ Fill mode + click trống => đổi background theo Color 2
+    private void DrawCanvas_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (!ViewModel.IsFillMode) return;
+        if (ViewModel.IsSelectionMode) return;
+
+        //// nếu event đã được shape handle thì thôi
+        //if (e.Handled) return;
+
+        //// chỉ xử lý khi click trực tiếp lên canvas trống
+        //if (e.OriginalSource == DrawCanvas)
+        //{
+        //    ViewModel.ApplyFillToBackground();
+        //    e.Handled = true;
+        //}
+
+        var p = e.GetPosition(DrawCanvas);
+
+        // ✅ lấy shape top-most nằm dưới point
+        var hit = DrawCanvas.Children
+            .OfType<Shape>()
+            .Reverse()
+            .FirstOrDefault(s =>
+                ViewModel.RuntimeShapes.Contains(s) &&
+                s is not Line && // line thường không fill
+                PointInRect(p, GetShapeBounds(s)));
+
+        if (hit != null)
+            ViewModel.ApplyFillTo(hit);
+        else
+            ViewModel.ApplyFillToBackground();
+
+        e.Handled = true;
     }
 
     private void ApplyTool(ShapeType type)
@@ -185,10 +261,17 @@ public sealed partial class DrawingPage : Page
     {
         shape.IsHitTestVisible = true;
 
-        shape.Tapped += (_, __) =>
+        if (shape is Rectangle or Ellipse or Polygon)
+        {
+            if (shape.Fill == null)
+                shape.Fill = new SolidColorBrush(Windows.UI.Color.FromArgb(0, 0, 0, 0));
+        }
+
+        shape.Tapped += (_, args) =>
         {
             if (ViewModel.IsFillMode)
                 ViewModel.ApplyFillTo(shape);
+            args.Handled = true;
         };
 
         // NOTE:
@@ -586,8 +669,8 @@ public sealed partial class DrawingPage : Page
 
             Microsoft.UI.Xaml.Shapes.Rectangle or Ellipse =>
                 new Rect(
-                    Canvas.GetLeft(s),
-                    Canvas.GetTop(s),
+                    double.IsNaN(Canvas.GetLeft(s)) ? 0 : Canvas.GetLeft(s),
+                    double.IsNaN(Canvas.GetTop(s)) ? 0 : Canvas.GetTop(s),
                     Math.Max(1, s.Width),
                     Math.Max(1, s.Height)
                 ),
@@ -909,13 +992,118 @@ public sealed partial class DrawingPage : Page
     private void BoardW_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
         if (!double.IsNaN(args.NewValue))
+        {
             ViewModel.BoardWidth = args.NewValue;
+            ClampShapesToBoard();
+            UpdateBoardClip();
+        }
     }
 
     private void BoardH_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
         if (!double.IsNaN(args.NewValue))
+        {
             ViewModel.BoardHeight = args.NewValue;
+            ClampShapesToBoard();
+            UpdateBoardClip();
+        }
+    }
+
+    private static double Clamp(double v, double min, double max)
+    {
+        if (v < min) return min;
+        if (v > max) return max;
+        return v;
+    }
+
+    private void UpdateBoardClip()
+    {
+        if (BoardSurface == null) return;
+
+        BoardSurface.Clip = new RectangleGeometry
+        {
+            Rect = new Rect(0, 0, ViewModel.BoardWidth, ViewModel.BoardHeight)
+        };
+    }
+
+    private void Thickness_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (!double.IsNaN(args.NewValue))
+            ViewModel.Thickness = args.NewValue;
+    }
+
+    private void ClampShapesToBoard()
+    {
+        double maxW = Math.Max(1, ViewModel.BoardWidth);
+        double maxH = Math.Max(1, ViewModel.BoardHeight);
+
+        foreach (var s in ViewModel.RuntimeShapes)
+        {
+            switch (s)
+            {
+                case Line l:
+                    l.X1 = Clamp(l.X1, 0, maxW);
+                    l.X2 = Clamp(l.X2, 0, maxW);
+                    l.Y1 = Clamp(l.Y1, 0, maxH);
+                    l.Y2 = Clamp(l.Y2, 0, maxH);
+                    break;
+
+                case Microsoft.UI.Xaml.Shapes.Rectangle or Ellipse:
+                    {
+                        var left = Canvas.GetLeft(s);
+                        var top = Canvas.GetTop(s);
+                        if (double.IsNaN(left)) left = 0;
+                        if (double.IsNaN(top)) top = 0;
+
+                        // nếu shape lớn hơn board -> co lại
+                        if (s.Width > maxW) s.Width = maxW;
+                        if (s.Height > maxH) s.Height = maxH;
+
+                        left = Clamp(left, 0, Math.Max(0, maxW - s.Width));
+                        top = Clamp(top, 0, Math.Max(0, maxH - s.Height));
+
+                        Canvas.SetLeft(s, left);
+                        Canvas.SetTop(s, top);
+                        break;
+                    }
+
+                case Polygon p:
+                    if (p.Points != null)
+                    {
+                        for (int i = 0; i < p.Points.Count; i++)
+                        {
+                            var pt = p.Points[i];
+                            p.Points[i] = new Point(
+                                Clamp(pt.X, 0, maxW),
+                                Clamp(pt.Y, 0, maxH));
+                        }
+                    }
+                    break;
+            }
+        }
+
+        // refresh selection visuals nếu đang chọn
+        if (ViewModel.HasSelection)
+            BuildSelectionFromShapes();
+    }
+
+    private void ZoomIn_Click(object sender, RoutedEventArgs e)
+    {
+        if (BoardScroll == null) return;
+        var z = Math.Min((float)BoardScroll.MaxZoomFactor, BoardScroll.ZoomFactor + ZOOM_STEP);
+        BoardScroll.ChangeView(null, null, z);
+    }
+
+    private void ZoomOut_Click(object sender, RoutedEventArgs e)
+    {
+        if (BoardScroll == null) return;
+        var z = Math.Max((float)BoardScroll.MinZoomFactor, BoardScroll.ZoomFactor - ZOOM_STEP);
+        BoardScroll.ChangeView(null, null, z);
+    }
+
+    private void ZoomReset_Click(object sender, RoutedEventArgs e)
+    {
+        BoardScroll?.ChangeView(null, null, 1.0f);
     }
 
     // ==========================

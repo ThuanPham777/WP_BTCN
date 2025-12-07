@@ -13,8 +13,8 @@ public static class ShapeFactory
         shape.Stroke = new SolidColorBrush(ParseColor(style.StrokeColor));
         shape.StrokeThickness = style.Thickness;
 
-        if (!string.IsNullOrWhiteSpace(style.FillColor))
-            shape.Fill = new SolidColorBrush(ParseColor(style.FillColor!));
+        //if (!string.IsNullOrWhiteSpace(style.FillColor))
+        //    shape.Fill = new SolidColorBrush(ParseColor(style.FillColor!));
 
         if (style.Dash == StrokeDash.Dash)
             shape.StrokeDashArray = new DoubleCollection { 6, 4 };

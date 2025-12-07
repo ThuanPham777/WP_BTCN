@@ -5,6 +5,7 @@ using DrawingApp.Core.Enums;
 using DrawingApp.Core.Interfaces.Repositories;
 using DrawingApp.Core.Interfaces.Services;
 using DrawingApp.Core.Models;
+using DrawingApp.UI.Drawing;
 using DrawingApp.UI.Navigation;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
@@ -32,6 +33,8 @@ public partial class DrawingViewModel : ObservableObject
     [ObservableProperty] private Guid? currentBoardId;
     [ObservableProperty] private string boardName = "Untitled Board";
 
+    [ObservableProperty] private string selectedColor = "#FF0F172A";
+
     [ObservableProperty] private double boardWidth;
     [ObservableProperty] private double boardHeight;
     [ObservableProperty] private string boardBackground = "#FFFFFFFF";
@@ -39,11 +42,42 @@ public partial class DrawingViewModel : ObservableObject
     [ObservableProperty] private ShapeType currentTool = ShapeType.Line;
 
     [ObservableProperty] private string strokeColor = "#FF0F172A";
-    [ObservableProperty] private string? fillColor;
+    [ObservableProperty] private string? fillColor = "#FF0F172A";
     [ObservableProperty] private double thickness = 2;
 
     [ObservableProperty] private bool isFillMode;
     [ObservableProperty] private bool isSelectionMode;
+
+    partial void OnSelectedColorChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return;
+
+        // ✅ Paint-like: change color => both stroke & fill follow
+        StrokeColor = value;
+        FillColor = value;
+
+        // optional: notify style rebuild
+        OnPropertyChanged(nameof(StrokeColor));
+        OnPropertyChanged(nameof(FillColor));
+    }
+
+    // Palette cơ bản
+    public IReadOnlyList<ColorOption> BasicColors { get; } = new List<ColorOption>
+    {
+        new("Black", "#FF000000"),
+        new("White", "#FFFFFFFF"),
+        new("Gray", "#FF808080"),
+        new("Red", "#FFED1C24"),
+        new("Orange", "#FFFF7F27"),
+        new("Yellow", "#FFFFF200"),
+        new("Green", "#FF22B14C"),
+        new("Cyan", "#FF00A2E8"),
+        new("Blue", "#FF3F48CC"),
+        new("Purple", "#FFA349A4"),
+        new("Brown", "#FFB97A57"),
+        new("Pink", "#FFFFAEC9"),
+    };
+
 
     public ObservableCollection<Shape> RuntimeShapes { get; } = new();
 
@@ -90,17 +124,22 @@ public partial class DrawingViewModel : ObservableObject
         BoardWidth = p?.DefaultBoardWidth ?? 900;
         BoardHeight = p?.DefaultBoardHeight ?? 600;
 
-        StrokeColor = p?.DefaultStrokeColor ?? "#FF0F172A";
         Thickness = p?.DefaultStrokeThickness ?? 2;
+
+        var defaultStroke = p?.DefaultStrokeColor ?? "#FF0F172A";
+        SelectedColor = defaultStroke;
     }
 
+
+
     public StrokeStyle BuildStyle()
-        => new()
-        {
-            StrokeColor = StrokeColor,
-            FillColor = FillColor,
-            Thickness = Thickness
-        };
+            => new()
+            {
+                StrokeColor = SelectedColor,
+                FillColor = null,
+                Thickness = Thickness
+            };
+
 
     [RelayCommand(CanExecute = nameof(CanBack))]
     private void Back()
@@ -108,6 +147,36 @@ public partial class DrawingViewModel : ObservableObject
         _nav.GoBack();
     }
 
+
+    [RelayCommand]
+    private void PickColor(string hex)
+    {
+        if (string.IsNullOrWhiteSpace(hex)) return;
+        SelectedColor = hex; // ✅ auto sync stroke + fill
+    }
+
+    public void ApplyCustomColor(string hex)
+        => PickColor(hex);
+
+
+
+    public void ApplyFillTo(Shape shape)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedColor))
+            return;
+
+        shape.Fill = new SolidColorBrush(ParseColor(SelectedColor));
+    }
+
+    public void ApplyFillToBackground()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedColor))
+            return;
+
+        BoardBackground = SelectedColor;
+    }
+
+    public record ColorOption(string Name, string Hex);
 
     // ==========================
     // Save Board (create/update)
@@ -227,6 +296,7 @@ public partial class DrawingViewModel : ObservableObject
         if (brush is SolidColorBrush scb)
         {
             var c = scb.Color;
+            if (c.A == 0) return null;
             return $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
         }
         return null;
@@ -448,14 +518,6 @@ public partial class DrawingViewModel : ObservableObject
         catch { return null; }
     }
 
-    // ==========================
-    // Fill helper
-    // ==========================
-    public void ApplyFillTo(Shape shape)
-    {
-        var hex = string.IsNullOrWhiteSpace(FillColor) ? StrokeColor : FillColor!;
-        shape.Fill = new SolidColorBrush(ParseColor(hex));
-    }
 
     private static Windows.UI.Color ParseColor(string hex)
     {
