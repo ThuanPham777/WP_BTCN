@@ -75,13 +75,13 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="models:ColorOption">
+                            <DataTemplate>
                                 <Button Width="22" Height="22"
-                        CornerRadius="4"
-                        Tag="{x:Bind Hex}"
-                        ToolTipService.ToolTip="{x:Bind Name}"
-                        Background="{Binding Hex, Converter={StaticResource HexToBrush}}"
-                        Click="ColorSwatch_Click"/>
+                                        CornerRadius="4"
+                                        Tag="{Binding Hex}"
+                                        ToolTipService.ToolTip="{Binding Name}"
+                                        Background="{Binding Hex, Converter={StaticResource HexToBrush}}"
+                                        Click="ColorSwatch_Click"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
