@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DrawingApp.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251206091247_InitialCreate")]
+    [Migration("20251207143744_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
