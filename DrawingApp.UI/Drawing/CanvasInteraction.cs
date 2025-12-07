@@ -20,6 +20,8 @@ public class CanvasInteraction
 
     private bool _isDrawing;
 
+    public bool IsEnabled { get; set; } = true;
+
     public CanvasInteraction(Canvas canvas)
     {
         _canvas = canvas;
@@ -34,9 +36,9 @@ public class CanvasInteraction
 
     private void OnPressed(object sender, PointerRoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (CurrentTool == null) return;
 
-        // nếu đang selection mode thì page sẽ chặn overlay
         var p = e.GetCurrentPoint(_canvas).Position;
         _isDrawing = true;
 
@@ -51,6 +53,7 @@ public class CanvasInteraction
 
     private void OnMoved(object sender, PointerRoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (!_isDrawing || CurrentTool == null) return;
 
         var p = e.GetCurrentPoint(_canvas).Position;
@@ -61,11 +64,11 @@ public class CanvasInteraction
 
     private void OnReleased(object sender, PointerRoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (!_isDrawing || CurrentTool == null) return;
 
         var p = e.GetCurrentPoint(_canvas).Position;
 
-        // Polygon không finalize ở release
         if (CurrentTool is PolygonTool)
         {
             e.Handled = true;
@@ -78,21 +81,19 @@ public class CanvasInteraction
         _canvas.ReleasePointerCapture(e.Pointer);
 
         if (shape != null)
-        {
-            // shape ở đây chính là preview đã nằm trên canvas
             ShapeCompleted?.Invoke(shape);
-        }
 
         e.Handled = true;
     }
 
     private void OnTapped(object sender, TappedRoutedEventArgs e)
     {
+        if (!IsEnabled) return;
+
         if (CurrentTool is PolygonTool poly)
         {
             var p = e.GetPosition(_canvas);
 
-            // nếu user tap trước khi pressed
             if (poly.Preview == null)
             {
                 poly.Begin(p, CloneStyle(CurrentStyle));
@@ -107,6 +108,8 @@ public class CanvasInteraction
 
     private void OnDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
+        if (!IsEnabled) return;
+
         if (CurrentTool is PolygonTool poly)
         {
             var p = e.GetPosition(_canvas);
@@ -137,3 +140,4 @@ public class CanvasInteraction
             _canvas.Children.Add(s);
     }
 }
+
