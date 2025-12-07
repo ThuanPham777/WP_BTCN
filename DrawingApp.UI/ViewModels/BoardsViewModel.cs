@@ -42,7 +42,7 @@ public partial class BoardsViewModel : ObservableObject
     private void OpenBoard(DrawingBoard? board)
     {
         if (board == null) return;
-        _nav.Navigate(typeof(Pages.DrawingPage), board.Id);
+        _nav.Navigate(typeof(Pages.DrawingPage), new DrawingNavigationArgs { BoardId = board.Id });
     }
 
 }

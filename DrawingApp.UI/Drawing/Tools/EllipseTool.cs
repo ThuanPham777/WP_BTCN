@@ -1,5 +1,6 @@
 ﻿using DrawingApp.Core.Enums;
 using DrawingApp.Core.Models;
+using DrawingApp.UI.Drawing;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Shapes;
 using System;
@@ -50,12 +51,10 @@ public class EllipseTool : IDrawTool
 
         if (Type == ShapeType.Circle)
         {
-            // ép thành hình tròn
             var size = Math.Min(w, h);
             w = size;
             h = size;
 
-            // giữ circle theo hướng kéo
             if (current.X < _start.X) left = _start.X - size;
             if (current.Y < _start.Y) top = _start.Y - size;
         }
@@ -69,7 +68,13 @@ public class EllipseTool : IDrawTool
 
     public Shape? End(Point end)
     {
+        if (_ellipse == null) return null;
+
         Update(end);
-        return _ellipse;
+
+        var result = _ellipse;
+        _ellipse = null;
+
+        return result;
     }
 }

@@ -1,7 +1,6 @@
 ﻿using DrawingApp.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
-using System;
 
 namespace DrawingApp.UI.Pages;
 

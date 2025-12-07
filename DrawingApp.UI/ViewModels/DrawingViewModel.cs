@@ -5,15 +5,15 @@ using DrawingApp.Core.Enums;
 using DrawingApp.Core.Interfaces.Repositories;
 using DrawingApp.Core.Interfaces.Services;
 using DrawingApp.Core.Models;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml.Media;
-using Windows.Foundation;
 
 namespace DrawingApp.UI.ViewModels;
 
@@ -23,11 +23,11 @@ public partial class DrawingViewModel : ObservableObject
     private readonly IBoardRepository _boards;
     private readonly ITemplateRepository _templates;
     private readonly IDialogService _dialog;
+
     public IReadOnlyList<ShapeType> ToolOptions { get; }
         = Enum.GetValues<ShapeType>();
 
     [ObservableProperty] private Guid? currentBoardId;
-
     [ObservableProperty] private string boardName = "Untitled Board";
 
     [ObservableProperty] private double boardWidth;
@@ -41,8 +41,13 @@ public partial class DrawingViewModel : ObservableObject
     [ObservableProperty] private double thickness = 2;
 
     [ObservableProperty] private bool isFillMode;
+    [ObservableProperty] private bool isSelectionMode;
 
     public ObservableCollection<Shape> RuntimeShapes { get; } = new();
+
+    public ObservableCollection<Shape> SelectedShapes { get; } = new();
+
+    public bool HasSelection => SelectedShapes.Count > 0;
 
     public DrawingViewModel(
         IProfileSession session,
@@ -57,6 +62,20 @@ public partial class DrawingViewModel : ObservableObject
 
         ApplyProfileDefaults();
         _session.ProfileChanged += _ => ApplyProfileDefaults();
+
+        SelectedShapes.CollectionChanged += SelectedShapes_CollectionChanged;
+    }
+
+    private void SelectedShapes_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        => OnPropertyChanged(nameof(HasSelection));
+
+    public void SetSelectedShapes(IEnumerable<Shape> shapes)
+    {
+        SelectedShapes.Clear();
+        foreach (var s in shapes)
+            SelectedShapes.Add(s);
+
+        OnPropertyChanged(nameof(HasSelection));
     }
 
     private void ApplyProfileDefaults()
@@ -77,6 +96,9 @@ public partial class DrawingViewModel : ObservableObject
             Thickness = Thickness
         };
 
+    // ==========================
+    // Save Board (create/update)
+    // ==========================
     [RelayCommand]
     public async Task SaveBoardAsync()
     {
@@ -128,41 +150,61 @@ public partial class DrawingViewModel : ObservableObject
         await _dialog.ShowMessageAsync("Saved", "Board created successfully.");
     }
 
+    // ==========================
+    // Save Selection -> Templates
+    // ==========================
     [RelayCommand]
-    public async Task SaveLastShapeAsTemplateAsync()
+    public async Task SaveSelectionAsync()
     {
-        if (RuntimeShapes.Count == 0) return;
+        if (!HasSelection) return;
 
-        var last = RuntimeShapes.Last();
-
-        var template = new ShapeTemplate
+        try
         {
-            Name = $"Template {DateTime.Now:HHmmss}",
-            ShapeType = GuessType(last),
-            StrokeColor = ExtractBrushHex(last.Stroke) ?? StrokeColor,
-            FillColor = ExtractBrushHex(last.Fill) ?? FillColor,
-            Thickness = last.StrokeThickness,
-            GeometryJson = SerializeShapeGeometry(last)
-        };
+            int i = 1;
+            foreach (var s in SelectedShapes)
+            {
+                var template = MapRuntimeShapeToTemplate(s, i++);
+                await _templates.AddAsync(template);
+            }
 
-        await _templates.AddAsync(template);
-        await _dialog.ShowMessageAsync("Template", "Saved last shape as template.");
+            await _dialog.ShowMessageAsync("Templates",
+                $"Saved {SelectedShapes.Count} template(s).");
+        }
+        catch (Exception ex)
+        {
+            await _dialog.ShowMessageAsync("Save selection failed", ex.Message);
+        }
     }
 
+    private ShapeTemplate MapRuntimeShapeToTemplate(Shape s, int index)
+        => new()
+        {
+            Name = $"{GuessType(s)} Template {DateTime.Now:HHmmss}-{index}",
+            ShapeType = GuessType(s),
+            StrokeColor = ExtractBrushHex(s.Stroke) ?? "#FF000000",
+            FillColor = ExtractBrushHex(s.Fill),
+            Thickness = s.StrokeThickness,
+            GeometryJson = SerializeShapeGeometry(s),
+        };
 
+    // ==========================
+    // Mapping shape -> BoardShape
+    // IMPORTANT:
+    // Lấy style từ chính shape để tránh bug:
+    // "đổi stroke mới làm shape cũ đổi theo"
+    // ==========================
     private BoardShape MapRuntimeShape(Shape s)
     {
         var strokeHex = ExtractBrushHex(s.Stroke) ?? "#FF000000";
-        var fillHex = ExtractBrushHex(s.Fill); // có thể null
-        var thickness = s.StrokeThickness;
+        var fillHex = ExtractBrushHex(s.Fill);
 
         return new BoardShape
         {
             ShapeType = GuessType(s),
             StrokeColor = strokeHex,
             FillColor = fillHex,
-            Thickness = thickness,
-            DashStyle = StrokeDash.Solid, // nếu bạn chưa lưu dash theo UI
+            Thickness = s.StrokeThickness,
+            DashStyle = StrokeDash.Solid,
             GeometryJson = SerializeShapeGeometry(s)
         };
     }
@@ -171,38 +213,26 @@ public partial class DrawingViewModel : ObservableObject
     {
         if (brush is SolidColorBrush scb)
         {
-            var c = scb.Color; // Windows.UI.Color
+            var c = scb.Color;
             return $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
         }
-
         return null;
     }
 
-
     private static ShapeType GuessType(Shape s)
-    {
-        return s switch
+        => s switch
         {
             Line => ShapeType.Line,
             Rectangle => ShapeType.Rectangle,
-            Ellipse => ShapeType.Oval, // Circle phân biệt bằng geometry ở UI/tool
+            Ellipse => ShapeType.Oval,
             Polygon => ShapeType.Polygon,
             _ => ShapeType.Line
         };
-    }
 
     private static string SerializeShapeGeometry(Shape s)
     {
         if (s is Line l)
-        {
-            return JsonSerializer.Serialize(new
-            {
-                x1 = l.X1,
-                y1 = l.Y1,
-                x2 = l.X2,
-                y2 = l.Y2
-            });
-        }
+            return JsonSerializer.Serialize(new { x1 = l.X1, y1 = l.Y1, x2 = l.X2, y2 = l.Y2 });
 
         if (s is Rectangle r)
         {
@@ -227,12 +257,13 @@ public partial class DrawingViewModel : ObservableObject
         return "{}";
     }
 
-
-    // để cho các lệnh load board
+    // ==========================
+    // Load Board
+    // ==========================
     public async Task LoadBoardAsync(Guid boardId)
     {
-
         CurrentBoardId = boardId;
+
         var board = await _boards.GetByIdAsync(CurrentBoardId);
         if (board == null)
         {
@@ -254,12 +285,51 @@ public partial class DrawingViewModel : ObservableObject
                 RuntimeShapes.Add(shape);
         }
 
+        // Clear selection khi load board khác
+        SelectedShapes.Clear();
+        OnPropertyChanged(nameof(HasSelection));
+
         await _dialog.ShowMessageAsync("Board loaded", $"Loaded '{board.Name}'.");
+    }
+
+    public async Task<Shape?> LoadTemplateAsShapeAsync(Guid templateId)
+    {
+        var t = await _templates.GetByIdAsync(templateId);
+        if (t == null)
+        {
+            await _dialog.ShowMessageAsync("Template", "Template not found.");
+            return null;
+        }
+
+        // build shape theo type + geometry
+        Shape? shape = t.ShapeType switch
+        {
+            Core.Enums.ShapeType.Line => BuildLine(t.GeometryJson),
+            Core.Enums.ShapeType.Rectangle => BuildRectangle(t.GeometryJson),
+            Core.Enums.ShapeType.Oval or Core.Enums.ShapeType.Circle => BuildEllipse(t.GeometryJson),
+            Core.Enums.ShapeType.Polygon => BuildPolygon(t.GeometryJson),
+            Core.Enums.ShapeType.Triangle => BuildPolygon(t.GeometryJson),
+            _ => null
+        };
+
+        if (shape == null) return null;
+
+        // apply style từ template
+        var style = new StrokeStyle
+        {
+            StrokeColor = t.StrokeColor,
+            FillColor = t.FillColor,
+            Thickness = t.Thickness,
+            Dash = t.DashStyle
+        };
+
+        DrawingApp.UI.Drawing.ShapeFactory.ApplyStroke(shape, style);
+
+        return shape;
     }
 
     private Shape? BuildShapeFromBoardShape(BoardShape bs)
     {
-        // apply style later
         var style = new StrokeStyle
         {
             StrokeColor = bs.StrokeColor,
@@ -274,7 +344,7 @@ public partial class DrawingViewModel : ObservableObject
             ShapeType.Rectangle => BuildRectangle(bs.GeometryJson),
             ShapeType.Oval or ShapeType.Circle => BuildEllipse(bs.GeometryJson),
             ShapeType.Polygon => BuildPolygon(bs.GeometryJson),
-            ShapeType.Triangle => BuildPolygon(bs.GeometryJson), // nếu bạn lưu triangle bằng polygon points
+            ShapeType.Triangle => BuildPolygon(bs.GeometryJson),
             _ => null
         };
 
@@ -290,7 +360,6 @@ public partial class DrawingViewModel : ObservableObject
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-
             return new Line
             {
                 X1 = root.GetProperty("x1").GetDouble(),
@@ -317,7 +386,6 @@ public partial class DrawingViewModel : ObservableObject
 
             Microsoft.UI.Xaml.Controls.Canvas.SetLeft(r, root.GetProperty("x").GetDouble());
             Microsoft.UI.Xaml.Controls.Canvas.SetTop(r, root.GetProperty("y").GetDouble());
-
             return r;
         }
         catch { return null; }
@@ -338,7 +406,6 @@ public partial class DrawingViewModel : ObservableObject
 
             Microsoft.UI.Xaml.Controls.Canvas.SetLeft(e, root.GetProperty("x").GetDouble());
             Microsoft.UI.Xaml.Controls.Canvas.SetTop(e, root.GetProperty("y").GetDouble());
-
             return e;
         }
         catch { return null; }
@@ -365,27 +432,25 @@ public partial class DrawingViewModel : ObservableObject
 
             return poly;
         }
-        catch
-        {
-            return null;
-        }
+        catch { return null; }
     }
 
+    // ==========================
+    // Fill helper
+    // ==========================
     public void ApplyFillTo(Shape shape)
     {
-        // nếu FillColor rỗng thì dùng StrokeColor cho tiện
         var hex = string.IsNullOrWhiteSpace(FillColor) ? StrokeColor : FillColor!;
         shape.Fill = new SolidColorBrush(ParseColor(hex));
     }
 
     private static Windows.UI.Color ParseColor(string hex)
     {
-        // Expect #AARRGGBB
         if (string.IsNullOrWhiteSpace(hex))
             return Windows.UI.Color.FromArgb(255, 0, 0, 0);
 
         if (hex.StartsWith("#")) hex = hex[1..];
-        if (hex.Length == 6) hex = "FF" + hex; // support #RRGGBB
+        if (hex.Length == 6) hex = "FF" + hex;
 
         byte a = Convert.ToByte(hex.Substring(0, 2), 16);
         byte r = Convert.ToByte(hex.Substring(2, 2), 16);

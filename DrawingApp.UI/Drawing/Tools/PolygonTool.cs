@@ -1,6 +1,8 @@
 ﻿using DrawingApp.Core.Enums;
 using DrawingApp.Core.Models;
+using DrawingApp.UI.Drawing;
 using Microsoft.UI.Xaml.Shapes;
+using System;
 using Windows.Foundation;
 
 namespace DrawingApp.UI.Drawing.Tools;
@@ -10,73 +12,90 @@ public class PolygonTool : IDrawTool
     public ShapeType Type => ShapeType.Polygon;
 
     private Polygon? _poly;
-    private StrokeStyle? _style;
 
     public Shape? Preview => _poly;
 
     public void Begin(Point start, StrokeStyle style)
     {
-        _style = style;
+        _poly = new Polygon
+        {
+            Points = new Microsoft.UI.Xaml.Media.PointCollection()
+        };
 
-        _poly = new Polygon();
         ShapeFactory.ApplyStroke(_poly, style);
 
-        // Polygon mode: không auto thêm start như line/rect
-        // Người dùng sẽ tap để thêm điểm
+        // không tự add start
+        // user sẽ tap để add
     }
 
-    // Với Polygon, Update sẽ dùng để preview điểm cuối theo mouse move
     public void Update(Point current)
     {
         if (_poly == null) return;
-
-        // Nếu đang có ít nhất 1 điểm:
-        // - Điểm cuối cùng được coi là "preview"
         if (_poly.Points.Count == 0) return;
 
-        // Nếu đã có preview point thì update nó
-        // Quy ước:
-        //   - Khi AddPoint: thêm 1 điểm thật
-        //   - Sau đó thêm 1 "preview point" nữa để Update kéo theo chuột
-        //   => Update sẽ sửa last point
+        // last is preview
         var lastIndex = _poly.Points.Count - 1;
         _poly.Points[lastIndex] = current;
+    }
+
+    public void AddPoint(Point p)
+    {
+        if (_poly == null) return;
+
+        // first point
+        if (_poly.Points.Count == 0)
+        {
+            _poly.Points.Add(p); // actual
+            _poly.Points.Add(p); // preview
+            return;
+        }
+
+        // convert preview -> actual
+        var lastIndex = _poly.Points.Count - 1;
+        _poly.Points[lastIndex] = p;
+
+        // add new preview
+        _poly.Points.Add(p);
     }
 
     public Shape? End(Point end)
     {
         if (_poly == null) return null;
 
-        // Nếu có preview point, bỏ nó để chốt polygon gọn
+        if (_poly.Points.Count == 0)
+        {
+            _poly = null;
+            return null;
+        }
+
+        // ensure preview follows end
+        Update(end);
+
+        // remove preview point
         if (_poly.Points.Count >= 2)
         {
-            // Nếu điểm cuối trùng logic preview, ta remove nó
-            // Cách đơn giản: remove last point rồi add end nếu cần
             _poly.Points.RemoveAt(_poly.Points.Count - 1);
         }
 
-        return _poly.Points.Count >= 3 ? _poly : null;
-    }
-
-    // Được gọi từ CanvasInteraction.OnTapped
-    public void AddPoint(Point p)
-    {
-        if (_poly == null) return;
-
-        // Nếu chưa có điểm nào:
-        if (_poly.Points.Count == 0)
+        // if end is meaningfully different from last actual -> add it
+        if (_poly.Points.Count > 0)
         {
-            _poly.Points.Add(p); // điểm thật đầu tiên
-            _poly.Points.Add(p); // preview point
-            return;
+            var last = _poly.Points[_poly.Points.Count - 1];
+            if (Distance(last, end) > 0.5)
+                _poly.Points.Add(end);
         }
 
-        // Nếu đang có preview point ở cuối:
-        // - biến preview thành điểm thật bằng cách set nó = p
-        var lastIndex = _poly.Points.Count - 1;
-        _poly.Points[lastIndex] = p;
+        var result = _poly.Points.Count >= 3 ? _poly : null;
 
-        // Thêm preview mới
-        _poly.Points.Add(p);
+        _poly = null;
+
+        return result;
+    }
+
+    private static double Distance(Point a, Point b)
+    {
+        var dx = a.X - b.X;
+        var dy = a.Y - b.Y;
+        return Math.Sqrt(dx * dx + dy * dy);
     }
 }

@@ -40,7 +40,13 @@ public class LineTool : IDrawTool
 
     public Shape? End(Point end)
     {
+        if (_line == null) return null;
+
         Update(end);
-        return _line;
+
+        var result = _line;
+        _line = null;
+
+        return result;
     }
 }

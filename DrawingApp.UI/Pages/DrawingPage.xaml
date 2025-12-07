@@ -6,27 +6,18 @@
 
     <Grid RowDefinitions="Auto,*" Padding="12">
 
-        <!-- Toolbar with horizontal scroll -->
-        <ScrollViewer
-            HorizontalScrollBarVisibility="Auto"
-            VerticalScrollBarVisibility="Disabled">
-
+        <!-- Toolbar -->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Disabled">
             <StackPanel Orientation="Horizontal" Spacing="8">
 
-                <TextBox Width="140"
+                <TextBox Width="160"
                          PlaceholderText="Name"
-                         Text="{Binding BoardName, Mode=TwoWay}"/>
+                         Text="{Binding BoardName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-                <!-- Tool -->
                 <ComboBox Width="180"
                           ItemsSource="{Binding ToolOptions}"
-                          SelectedItem="{Binding CurrentTool, Mode=TwoWay}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                          SelectedItem="{Binding CurrentTool, Mode=TwoWay}"/>
 
                 <TextBox Width="140"
                          PlaceholderText="Stroke #AARRGGBB"
@@ -40,6 +31,8 @@
                            Header="Thickness"
                            Value="{Binding Thickness, Mode=TwoWay}"/>
 
+                <!-- Nếu bạn từng bị case NumberBox không update UI,
+                     giữ ValueChanged để chắc chắn -->
                 <NumberBox Width="120"
                            Header="Board W"
                            Value="{Binding BoardWidth, Mode=TwoWay}"
@@ -57,27 +50,50 @@
                 <Button Content="Save Board"
                         Command="{Binding SaveBoardCommand}"/>
 
-                <Button Content="Save Last Shape -> Template"
-                        Command="{Binding SaveLastShapeAsTemplateCommand}"/>
-
+                <!-- Fill -->
                 <ToggleButton Content="Fill Mode"
-                        IsChecked="{Binding IsFillMode, Mode=TwoWay}"/>
+                              IsChecked="{Binding IsFillMode, Mode=TwoWay}"/>
+
+                <!-- Selection -->
+                <ToggleButton Content="Selection"
+                              IsChecked="{Binding IsSelectionMode, Mode=TwoWay}"/>
+
+                <!-- Save selection to templates -->
+                <Button Content="Save Selection -> Templates"
+                        Command="{Binding SaveSelectionCommand}"
+                        IsEnabled="{Binding HasSelection}"/>
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Canvas -->
+        <!-- Canvas area -->
         <Border Grid.Row="1"
                 Margin="0,12,0,0"
                 Background="White"
                 BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="1">
 
-            <Canvas x:Name="DrawCanvas"
-                    Background="Transparent"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Width="{Binding BoardWidth}"
-                    Height="{Binding BoardHeight}"/>
+            <!-- Layered canvas -->
+            <Grid>
+                <!-- Draw layer -->
+                <Canvas x:Name="DrawCanvas"
+                        Background="Transparent"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Width="{Binding BoardWidth}"
+                        Height="{Binding BoardHeight}"/>
+
+                <!-- Selection overlay -->
+                <Canvas x:Name="SelectionOverlay"
+                        Background="Transparent"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Width="{Binding BoardWidth}"
+                        Height="{Binding BoardHeight}"
+                        IsHitTestVisible="{Binding IsSelectionMode}"
+                        PointerPressed="Selection_Pressed"
+                        PointerMoved="Selection_Moved"
+                        PointerReleased="Selection_Released"/>
+            </Grid>
         </Border>
     </Grid>
 </Page>

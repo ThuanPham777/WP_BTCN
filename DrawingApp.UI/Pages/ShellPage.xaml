@@ -9,7 +9,10 @@
             x:Name="Nav"
             IsBackButtonVisible="Visible"
             BackRequested="Nav_BackRequested"
-            SelectionChanged="Nav_SelectionChanged">
+            SelectionChanged="Nav_SelectionChanged"
+            OpenPaneLength="180"
+            CompactPaneLength="100"
+            PaneDisplayMode="LeftCompact">
 
             <controls:NavigationView.MenuItems>
                 <controls:NavigationViewItem Content="Home" Tag="main" Icon="Home"/>

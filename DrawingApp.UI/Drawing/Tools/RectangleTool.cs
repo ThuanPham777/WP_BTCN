@@ -1,5 +1,6 @@
 ﻿using DrawingApp.Core.Enums;
 using DrawingApp.Core.Models;
+using DrawingApp.UI.Drawing;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Shapes;
 using System;
@@ -20,14 +21,15 @@ public class RectangleTool : IDrawTool
     {
         _start = start;
 
-        _rect = new Rectangle();
-        ShapeFactory.ApplyStroke(_rect, style);
+        _rect = new Rectangle
+        {
+            Width = 0,
+            Height = 0
+        };
 
+        ShapeFactory.ApplyStroke(_rect, style);
         Canvas.SetLeft(_rect, start.X);
         Canvas.SetTop(_rect, start.Y);
-
-        _rect.Width = 0;
-        _rect.Height = 0;
     }
 
     public void Update(Point current)
@@ -47,7 +49,13 @@ public class RectangleTool : IDrawTool
 
     public Shape? End(Point end)
     {
+        if (_rect == null) return null;
+
         Update(end);
-        return _rect;
+
+        var result = _rect;
+        _rect = null;
+
+        return result;
     }
 }

@@ -36,6 +36,7 @@ public class CanvasInteraction
     {
         if (CurrentTool == null) return;
 
+        // nếu đang selection mode thì page sẽ chặn overlay
         var p = e.GetCurrentPoint(_canvas).Position;
         _isDrawing = true;
 
@@ -77,7 +78,10 @@ public class CanvasInteraction
         _canvas.ReleasePointerCapture(e.Pointer);
 
         if (shape != null)
+        {
+            // shape ở đây chính là preview đã nằm trên canvas
             ShapeCompleted?.Invoke(shape);
+        }
 
         e.Handled = true;
     }
@@ -88,8 +92,7 @@ public class CanvasInteraction
         {
             var p = e.GetPosition(_canvas);
 
-            // Nếu chưa Begin vì user click trực tiếp:
-            // đảm bảo tool đã có preview instance
+            // nếu user tap trước khi pressed
             if (poly.Preview == null)
             {
                 poly.Begin(p, CloneStyle(CurrentStyle));
@@ -133,5 +136,4 @@ public class CanvasInteraction
         foreach (var s in shapes)
             _canvas.Children.Add(s);
     }
-
 }
