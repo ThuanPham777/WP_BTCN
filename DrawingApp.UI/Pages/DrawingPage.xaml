@@ -2,68 +2,154 @@
     x:Class="DrawingApp.UI.Pages.DrawingPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:enums="using:DrawingApp.Core.Enums">
+    xmlns:enums="using:DrawingApp.Core.Enums"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls">
 
     <Grid RowDefinitions="Auto,*" Padding="12">
 
-        <!-- Toolbar -->
-        <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Disabled">
-            <StackPanel Orientation="Horizontal" Spacing="8">
+        <!-- Toolbar (Responsive, no horizontal scroll) -->
+        <Border
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            Padding="12">
 
-                <TextBox Width="160"
-                         PlaceholderText="Name"
-                         Text="{Binding BoardName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <toolkit:WrapPanel Orientation="Horizontal"
+                   HorizontalSpacing="14"
+                   VerticalSpacing="10">
 
-                <ComboBox Width="180"
-                          ItemsSource="{Binding ToolOptions}"
-                          SelectedItem="{Binding CurrentTool, Mode=TwoWay}"/>
+                <!-- Back -->
+                <Button Command="{Binding BackCommand}"
+                VerticalAlignment="Bottom">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE72B;"/>
+                        <TextBlock Text="Back"/>
+                    </StackPanel>
+                </Button>
 
-                <TextBox Width="140"
-                         PlaceholderText="Stroke #AARRGGBB"
-                         Text="{Binding StrokeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <!-- Board Name -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Board name"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <TextBox Width="180"
+                     PlaceholderText="Untitled Board"
+                     Text="{Binding BoardName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
 
-                <TextBox Width="140"
-                         PlaceholderText="Fill #AARRGGBB"
-                         Text="{Binding FillColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <!-- Tool -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Tool"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <ComboBox Width="170"
+                      ItemsSource="{Binding ToolOptions}"
+                      SelectedItem="{Binding CurrentTool, Mode=TwoWay}"/>
+                </StackPanel>
 
-                <NumberBox Width="110"
-                           Header="Thickness"
-                           Value="{Binding Thickness, Mode=TwoWay}"/>
+                <!-- Stroke Color -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Stroke"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <TextBox Width="120"
+                     PlaceholderText="#AARRGGBB"
+                     Text="{Binding StrokeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
 
-                <!-- Nếu bạn từng bị case NumberBox không update UI,
-                     giữ ValueChanged để chắc chắn -->
-                <NumberBox Width="120"
-                           Header="Board W"
-                           Value="{Binding BoardWidth, Mode=TwoWay}"
-                           ValueChanged="BoardW_ValueChanged"/>
+                <!-- Fill Color -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Fill"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <TextBox Width="120"
+                     PlaceholderText="#AARRGGBB"
+                     Text="{Binding FillColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
 
-                <NumberBox Width="120"
-                           Header="Board H"
-                           Value="{Binding BoardHeight, Mode=TwoWay}"
-                           ValueChanged="BoardH_ValueChanged"/>
+                <!-- Thickness -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Thickness"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <NumberBox Width="110"
+                       Minimum="1"
+                       SmallChange="1"
+                       Value="{Binding Thickness, Mode=TwoWay}"/>
+                </StackPanel>
 
-                <TextBox Width="160"
-                         PlaceholderText="Board BG"
-                         Text="{Binding BoardBackground, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <!-- Board Width -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Board width"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <NumberBox Width="120"
+                       Minimum="100"
+                       Value="{Binding BoardWidth, Mode=TwoWay}"
+                       ValueChanged="BoardW_ValueChanged"/>
+                </StackPanel>
 
-                <Button Content="Save Board"
-                        Command="{Binding SaveBoardCommand}"/>
+                <!-- Board Height -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Board height"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <NumberBox Width="120"
+                       Minimum="100"
+                       Value="{Binding BoardHeight, Mode=TwoWay}"
+                       ValueChanged="BoardH_ValueChanged"/>
+                </StackPanel>
 
-                <!-- Fill -->
-                <ToggleButton Content="Fill Mode"
-                              IsChecked="{Binding IsFillMode, Mode=TwoWay}"/>
+                <!-- Background -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Background"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <TextBox Width="120"
+                     PlaceholderText="#AARRGGBB"
+                     Text="{Binding BoardBackground, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+
+                <!-- Save -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Board"
+                       Opacity="0.0"
+                       FontSize="12"/>
+                    <Button Content="Save Board"
+                    Command="{Binding SaveBoardCommand}"/>
+                </StackPanel>
+
+                <!-- Fill Mode -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Fill mode"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <ToggleButton Content="Enable"
+                          IsChecked="{Binding IsFillMode, Mode=TwoWay}"/>
+                </StackPanel>
 
                 <!-- Selection -->
-                <ToggleButton Content="Selection"
-                              IsChecked="{Binding IsSelectionMode, Mode=TwoWay}"/>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Selection"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <ToggleButton Content="Enable"
+                          IsChecked="{Binding IsSelectionMode, Mode=TwoWay}"/>
+                </StackPanel>
 
-                <!-- Save selection to templates -->
-                <Button Content="Save Selection -> Templates"
-                        Command="{Binding SaveSelectionCommand}"
-                        IsEnabled="{Binding HasSelection}"/>
-            </StackPanel>
-        </ScrollViewer>
+                <!-- Save selection -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Templates"
+                       Opacity="0.7"
+                       FontSize="12"/>
+                    <Button Content="Save Selection"
+                    Command="{Binding SaveSelectionCommand}"
+                    IsEnabled="{Binding HasSelection}"/>
+                </StackPanel>
+            </toolkit:WrapPanel>
+        </Border>
+
 
         <!-- Canvas area -->
         <Border Grid.Row="1"

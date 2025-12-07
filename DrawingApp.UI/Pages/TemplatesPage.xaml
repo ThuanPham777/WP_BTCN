@@ -4,38 +4,40 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <StackPanel Padding="24" Spacing="10">
-        <TextBlock Text="Templates" FontSize="24"/>
+    <ScrollViewer>
+        <StackPanel Padding="24" Spacing="10">
+            <TextBlock Text="Templates" FontSize="24"/>
 
-        <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="Load" Command="{Binding LoadCommand}"/>
-            <Button Content="Delete Selected" Command="{Binding DeleteCommand}"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Load" Command="{Binding LoadCommand}"/>
+                <Button Content="Delete Selected" Command="{Binding DeleteCommand}"/>
+            </StackPanel>
+
+            <ListView ItemsSource="{Binding Items}"
+                      SelectedItem="{Binding Selected, Mode=TwoWay}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="*,Auto,Auto" Padding="6">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding ShapeType}" Opacity="0.6"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="1"
+                                    Margin="8,0,0,0"
+                                    Content="Use"
+                                    Command="{Binding DataContext.OpenTemplateCommand, ElementName=ThisPage}"
+                                    CommandParameter="{Binding}"/>
+
+                            <Button Grid.Column="2"
+                                    Margin="8,0,0,0"
+                                    Content="Delete"
+                                    Command="{Binding DataContext.DeleteItemCommand, ElementName=ThisPage}"
+                                    CommandParameter="{Binding}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
         </StackPanel>
-
-        <ListView ItemsSource="{Binding Items}"
-                  SelectedItem="{Binding Selected, Mode=TwoWay}">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid ColumnDefinitions="*,Auto,Auto" Padding="6">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding ShapeType}" Opacity="0.6"/>
-                        </StackPanel>
-
-                        <Button Grid.Column="1"
-                                Margin="8,0,0,0"
-                                Content="Use"
-                                Command="{Binding DataContext.OpenTemplateCommand, ElementName=ThisPage}"
-                                CommandParameter="{Binding}"/>
-
-                        <Button Grid.Column="2"
-                                Margin="8,0,0,0"
-                                Content="Delete"
-                                Command="{Binding DataContext.DeleteItemCommand, ElementName=ThisPage}"
-                                CommandParameter="{Binding}"/>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-    </StackPanel>
+    </ScrollViewer>
 </Page>

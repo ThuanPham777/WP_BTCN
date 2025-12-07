@@ -5,6 +5,7 @@ using DrawingApp.Core.Enums;
 using DrawingApp.Core.Interfaces.Repositories;
 using DrawingApp.Core.Interfaces.Services;
 using DrawingApp.Core.Models;
+using DrawingApp.UI.Navigation;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using System;
@@ -23,6 +24,7 @@ public partial class DrawingViewModel : ObservableObject
     private readonly IBoardRepository _boards;
     private readonly ITemplateRepository _templates;
     private readonly IDialogService _dialog;
+    private readonly INavigationService _nav;
 
     public IReadOnlyList<ShapeType> ToolOptions { get; }
         = Enum.GetValues<ShapeType>();
@@ -49,16 +51,20 @@ public partial class DrawingViewModel : ObservableObject
 
     public bool HasSelection => SelectedShapes.Count > 0;
 
+    public bool CanBack => _nav.CanGoBack;
+
     public DrawingViewModel(
         IProfileSession session,
         IBoardRepository boards,
         ITemplateRepository templates,
-        IDialogService dialog)
+        IDialogService dialog,
+        INavigationService nav)
     {
         _session = session;
         _boards = boards;
         _templates = templates;
         _dialog = dialog;
+        _nav = nav;
 
         ApplyProfileDefaults();
         _session.ProfileChanged += _ => ApplyProfileDefaults();
@@ -95,6 +101,13 @@ public partial class DrawingViewModel : ObservableObject
             FillColor = FillColor,
             Thickness = Thickness
         };
+
+    [RelayCommand(CanExecute = nameof(CanBack))]
+    private void Back()
+    {
+        _nav.GoBack();
+    }
+
 
     // ==========================
     // Save Board (create/update)

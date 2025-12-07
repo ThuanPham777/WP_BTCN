@@ -11,7 +11,7 @@
             BackRequested="Nav_BackRequested"
             SelectionChanged="Nav_SelectionChanged"
             OpenPaneLength="180"
-            CompactPaneLength="100"
+            CompactPaneLength="44"
             PaneDisplayMode="LeftCompact">
 
             <controls:NavigationView.MenuItems>
