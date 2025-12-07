@@ -147,4 +147,13 @@ public class BoardRepository : IBoardRepository
 
         await db.SaveChangesAsync();
     }
+
+    public async Task<List<DrawingBoard>> GetAllWithShapesAsync()
+    {
+        using var db = _factory.CreateDbContext();
+        return await db.Boards.AsNoTracking()
+                     .Include(b => b.Shapes)
+                     .OrderByDescending(b => b.CreatedAt)
+                     .ToListAsync();
+    }
 }

@@ -21,4 +21,6 @@ public interface IBoardRepository
         string? background,
         List<BoardShape> newShapes);
 
+    Task<List<DrawingBoard>> GetAllWithShapesAsync();
+
 }
